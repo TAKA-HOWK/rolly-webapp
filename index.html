@@ -594,7 +594,16 @@ document.addEventListener('click', e => {
     dropdown.querySelectorAll('.group-options').forEach(o => o.style.display = 'none');
   }
 }); 
+
   
 </script>
+
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<script>
+  const tg = Telegram.WebApp;
+  tg.expand(); // растягивает приложение на весь экран
+</script>
+  
 </body>
 </html>
+
