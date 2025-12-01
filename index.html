@@ -536,16 +536,13 @@ $("#saveJpeg").onclick = () => {
     // --- Сохранить как JPEG ---
 const imgData = canvas.toDataURL("image/jpeg", 0.95);
 
-// открыть в новой вкладке — пользователь сам может сохранить изображение
-const w = window.open();
-if (w) {
-  w.document.write(`<img src="${imgData}" style="width:100%;height:auto;"/>`);
-  w.document.title = `rolshtory_page_${page + 1}.jpg`;
-} else {
-  alert("Разрешите всплывающие окна, чтобы сохранить изображение");
-}
-}
-};
+    
+const link = document.createElement("a");
+link.href = imgData;
+link.download = `rolshtory_page_${page + 1}.jpg`;
+document.body.appendChild(link);
+link.click();
+link.remove();
 
 
 
@@ -606,4 +603,5 @@ document.addEventListener('click', e => {
   
 </body>
 </html>
+
 
