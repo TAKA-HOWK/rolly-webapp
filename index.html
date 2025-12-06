@@ -427,10 +427,10 @@ $("#saveJpeg").onclick = () => {
   }
 
   // A4 landscape: 842 x 595 при 96 DPI
-  const pageWidth = 600;
-  const pageHeight = 420;
+  const pageWidth = 842;
+  const pageHeight = 595;
   const margin = 40;
-  const dpi = 1;
+  const dpi = 2;
 
   const contentWidth = pageWidth - margin * 2;
 
@@ -534,11 +534,17 @@ $("#saveJpeg").onclick = () => {
     ctx.fillText(`Страница ${page + 1} из ${totalPages}`, pageWidth - margin - 120, pageHeight - margin + 5);
 
     // --- Сохранить как JPEG ---
-canvas.toBlob(blob => {
-  const url = URL.createObjectURL(blob);
-  window.open(url, "_blank");
-}, "image/jpeg", 0.95);
-  }
+const imgData = canvas.toDataURL("image/jpeg", 0.95);
+
+// открыть в новой вкладке — пользователь сам может сохранить изображение
+const w = window.open();
+if (w) {
+  w.document.write(`<img src="${imgData}" style="width:100%;height:auto;"/>`);
+  w.document.title = `rolshtory_page_${page + 1}.jpg`;
+} else {
+  alert("Разрешите всплывающие окна, чтобы сохранить изображение");
+}
+}
 };
 
 
@@ -592,5 +598,3 @@ document.addEventListener('click', e => {
 </script>
 </body>
 </html>
-
-
