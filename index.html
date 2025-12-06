@@ -534,17 +534,11 @@ $("#saveJpeg").onclick = () => {
     ctx.fillText(`Страница ${page + 1} из ${totalPages}`, pageWidth - margin - 120, pageHeight - margin + 5);
 
     // --- Сохранить как JPEG ---
-const imgData = canvas.toDataURL("image/jpeg", 0.95);
-
-// открыть в новой вкладке — пользователь сам может сохранить изображение
-const w = window.open();
-if (w) {
-  w.document.write(`<img src="${imgData}" style="width:100%;height:auto;"/>`);
-  w.document.title = `rolshtory_page_${page + 1}.jpg`;
-} else {
-  alert("Разрешите всплывающие окна, чтобы сохранить изображение");
-}
-}
+    const a = document.createElement("a");
+    a.download = `rolshtory_page_${page + 1}.jpg`;
+    a.href = canvas.toDataURL("image/jpeg", 0.95);
+    a.click();
+  }
 };
 
 
