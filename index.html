@@ -530,10 +530,16 @@ $("#saveJpeg").onclick = () => {
     ctx.fillText(`Страница ${page + 1} из ${totalPages}`, pageWidth - margin - 120, pageHeight - margin + 5);
 
     // --- Сохранение через Blob для Telegram ---
-    canvas.toBlob(blob => {
-      const url = URL.createObjectURL(blob);
-      window.open(url, "_blank"); // Telegram откроет изображение и позволит сохранить
-    }, "image/jpeg", 0.95);
+canvas.toBlob(blob => {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `rolshtory_page_${page + 1}.jpg`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}, 'image/jpeg', 0.95);
   }
 };
 
@@ -586,6 +592,7 @@ document.addEventListener('click', e => {
 </script>
 </body>
 </html>
+
 
 
 
