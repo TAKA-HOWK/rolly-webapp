@@ -536,21 +536,14 @@ $("#saveJpeg").onclick = () => {
     // --- Сохранить как JPEG ---
 const imgData = canvas.toDataURL("image/jpeg", 0.95);
 
-
-// --- Сохранить как JPEG через Blob ---
-const byteString = atob(imgData.split(',')[1]);
-const ab = new ArrayBuffer(byteString.length);
-const ia = new Uint8Array(ab);
-for (let i = 0; i < byteString.length; i++) {
-  ia[i] = byteString.charCodeAt(i);
+// открыть в новой вкладке — пользователь сам может сохранить изображение
+const w = window.open();
+if (w) {
+  w.document.write(`<img src="${imgData}" style="width:100%;height:auto;"/>`);
+  w.document.title = `rolshtory_page_${page + 1}.jpg`;
+} else {
+  alert("Разрешите всплывающие окна, чтобы сохранить изображение");
 }
-const blob = new Blob([ab], {type: 'image/jpeg'});
-const link = document.createElement('a');
-link.href = URL.createObjectURL(blob);
-link.download = `rolshtory_page_${page + 1}.jpg`;
-link.click();
-
-
 }
 };
 
