@@ -419,26 +419,29 @@ $("#clearBtn").onclick = () => {
 
     
     
-// --- JPEG экспорт с разбивкой на страницы A4, работает в Telegram ---
+// --- JPEG экспорт с разбивкой на страницы A4 ---
 $("#saveJpeg").onclick = () => {
   if (!rows.length) {
     alert("Таблица пуста");
     return;
   }
 
+  // A4 landscape: 842 x 595 при 96 DPI
   const pageWidth = 842;
   const pageHeight = 595;
   const margin = 40;
-  const dpi = 2;
+  const dpi = 1;
 
   const contentWidth = pageWidth - margin * 2;
+
+  // Данные формы
   const dateNumber = $("#date").value.trim();
   const orderNumber = $("#numb").value.trim();
   const customer = $("#customer").value.trim();
   const notes = $("#notes").value.trim();
 
   const headers = ["#", "Система", "Цвет", "Ширина", "Высота", "Размеры", "Управление", "Кол-во","Для заметок"];
-  const colW = [40, 100, 100, 70, 70, 85, 85, 60,153];
+  const colW = [40, 100, 100, 70, 70, 85, 85, 60,153]; // сумма = 610 + 153
 
   const rowH = 28;
   const headH = 36;
@@ -453,6 +456,7 @@ $("#saveJpeg").onclick = () => {
     const canvas = document.createElement("canvas");
     canvas.width = pageWidth * dpi;
     canvas.height = pageHeight * dpi;
+
     const ctx = canvas.getContext("2d");
     ctx.scale(dpi, dpi);
 
@@ -463,7 +467,7 @@ $("#saveJpeg").onclick = () => {
     let xStart = margin;
     let yStart = margin;
 
-    // --- Заголовки заказа ---
+    // --- Блок: Заголовки заказа ---
     ctx.fillStyle = "#000";
     ctx.font = "bold 16px Arial";
     ctx.textBaseline = "top";
@@ -471,7 +475,7 @@ $("#saveJpeg").onclick = () => {
     ctx.fillText(`Номер заказа: ${orderNumber || "-"}`, xStart + 210, yStart);
     ctx.fillText(`Заказчик: ${customer || "-"}`, xStart + 420, yStart);
 
-    // --- Заголовки таблицы ---
+    // --- Блок: Заголовки таблицы ---
     yStart += orderInfoH;
     ctx.fillStyle = "#ddd";
     ctx.fillRect(xStart, yStart, contentWidth, headH);
@@ -510,7 +514,7 @@ $("#saveJpeg").onclick = () => {
       });
     });
 
-    // --- Примечание на последней странице ---
+    // --- Примечание — только на последней странице ---
     if (page === totalPages - 1 && notes) {
       const yNotes = yStart + headH + currentRows.length * rowH + 10;
       ctx.fillStyle = "#444";
@@ -529,19 +533,21 @@ $("#saveJpeg").onclick = () => {
     ctx.font = "12px Arial";
     ctx.fillText(`Страница ${page + 1} из ${totalPages}`, pageWidth - margin - 120, pageHeight - margin + 5);
 
-    // --- Сохранение через Blob для Telegram ---
-canvas.toBlob(blob => {
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `rolshtory_page_${page + 1}.jpg`;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  URL.revokeObjectURL(url);
-}, 'image/jpeg', 0.95);
-  }
+    // --- Сохранить как JPEG ---
+const imgData = canvas.toDataURL("image/jpeg", 0.95);
+
+// открыть в новой вкладке — пользователь сам может сохранить изображение
+const w = window.open();
+if (w) {
+  w.document.write(`<img src="${imgData}" style="width:100%;height:auto;"/>`);
+  w.document.title = `rolshtory_page_${page + 1}.jpg`;
+} else {
+  alert("Разрешите всплывающие окна, чтобы сохранить изображение");
+}
+}
 };
+
+
 
 
 render();
@@ -592,7 +598,3 @@ document.addEventListener('click', e => {
 </script>
 </body>
 </html>
-
-
-
-
