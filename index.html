@@ -534,10 +534,10 @@ $("#saveJpeg").onclick = () => {
     ctx.fillText(`Страница ${page + 1} из ${totalPages}`, pageWidth - margin - 120, pageHeight - margin + 5);
 
     // --- Сохранить как JPEG ---
-    const a = document.createElement("a");
-    a.download = `rolshtory_page_${page + 1}.jpg`;
-    a.href = canvas.toDataURL("image/jpeg", 0.95);
-    a.click();
+const link = document.createElement('a');
+link.href = canvas.toDataURL("image/jpeg", 0.95);
+link.download = `rolshtory_page_${page + 1}.jpg`;
+link.click();
   }
 };
 
