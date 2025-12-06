@@ -419,14 +419,13 @@ $("#clearBtn").onclick = () => {
 
     
     
-// --- JPEG экспорт с разбивкой на страницы A4 ---
+// --- JPEG экспорт с разбивкой на страницы A4 (скачивание) ---
 $("#saveJpeg").onclick = () => {
   if (!rows.length) {
     alert("Таблица пуста");
     return;
   }
 
-  // A4 landscape: 842 x 595 при 96 DPI
   const pageWidth = 842;
   const pageHeight = 595;
   const margin = 40;
@@ -434,14 +433,13 @@ $("#saveJpeg").onclick = () => {
 
   const contentWidth = pageWidth - margin * 2;
 
-  // Данные формы
   const dateNumber = $("#date").value.trim();
   const orderNumber = $("#numb").value.trim();
   const customer = $("#customer").value.trim();
   const notes = $("#notes").value.trim();
 
   const headers = ["#", "Система", "Цвет", "Ширина", "Высота", "Размеры", "Управление", "Кол-во","Для заметок"];
-  const colW = [40, 100, 100, 70, 70, 85, 85, 60,153]; // сумма = 610 + 153
+  const colW = [40, 100, 100, 70, 70, 85, 85, 60, 153];
 
   const rowH = 28;
   const headH = 36;
@@ -460,14 +458,13 @@ $("#saveJpeg").onclick = () => {
     const ctx = canvas.getContext("2d");
     ctx.scale(dpi, dpi);
 
-    // Белый фон
     ctx.fillStyle = "#ffffff";
     ctx.fillRect(0, 0, pageWidth, pageHeight);
 
     let xStart = margin;
     let yStart = margin;
 
-    // --- Блок: Заголовки заказа ---
+    // Заголовок заказа
     ctx.fillStyle = "#000";
     ctx.font = "bold 16px Arial";
     ctx.textBaseline = "top";
@@ -475,7 +472,7 @@ $("#saveJpeg").onclick = () => {
     ctx.fillText(`Номер заказа: ${orderNumber || "-"}`, xStart + 210, yStart);
     ctx.fillText(`Заказчик: ${customer || "-"}`, xStart + 420, yStart);
 
-    // --- Блок: Заголовки таблицы ---
+    // Заголовки таблицы
     yStart += orderInfoH;
     ctx.fillStyle = "#ddd";
     ctx.fillRect(xStart, yStart, contentWidth, headH);
@@ -490,7 +487,7 @@ $("#saveJpeg").onclick = () => {
       colX += colW[i];
     });
 
-    // --- Строки таблицы ---
+    // Строки таблицы
     const startRow = page * maxRows;
     const endRow = Math.min(startRow + maxRows, rows.length);
     const currentRows = rows.slice(startRow, endRow);
@@ -514,7 +511,7 @@ $("#saveJpeg").onclick = () => {
       });
     });
 
-    // --- Примечание — только на последней странице ---
+    // Примечание на последней странице
     if (page === totalPages - 1 && notes) {
       const yNotes = yStart + headH + currentRows.length * rowH + 10;
       ctx.fillStyle = "#444";
@@ -528,24 +525,19 @@ $("#saveJpeg").onclick = () => {
       });
     }
 
-    // --- Номер страницы ---
     ctx.fillStyle = "#999";
     ctx.font = "12px Arial";
     ctx.fillText(`Страница ${page + 1} из ${totalPages}`, pageWidth - margin - 120, pageHeight - margin + 5);
 
-    // --- Сохранить как JPEG ---
-const imgData = canvas.toDataURL("image/jpeg", 0.95);
-
-// открыть в новой вкладке — пользователь сам может сохранить изображение
-const w = window.open();
-if (w) {
-  w.document.write(`<img src="${imgData}" style="width:100%;height:auto;"/>`);
-  w.document.title = `rolshtory_page_${page + 1}.jpg`;
-} else {
-  alert("Разрешите всплывающие окна, чтобы сохранить изображение");
-}
-}
+    // Скачать изображение напрямую
+    const imgData = canvas.toDataURL("image/jpeg", 0.95);
+    const link = document.createElement('a');
+    link.href = imgData;
+    link.download = `rolshtory_page_${page + 1}.jpg`;
+    link.click();
+  }
 };
+
 
 
 
@@ -598,3 +590,4 @@ document.addEventListener('click', e => {
 </script>
 </body>
 </html>
+
