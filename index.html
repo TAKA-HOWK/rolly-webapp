@@ -534,10 +534,10 @@ $("#saveJpeg").onclick = () => {
     ctx.fillText(`Страница ${page + 1} из ${totalPages}`, pageWidth - margin - 120, pageHeight - margin + 5);
 
     // --- Сохранить как JPEG ---
-const link = document.createElement('a');
-link.href = canvas.toDataURL("image/jpeg", 0.95);
-link.download = `rolshtory_page_${page + 1}.jpg`;
-link.click();
+canvas.toBlob(blob => {
+  const url = URL.createObjectURL(blob);
+  window.open(url, "_blank");
+}, "image/jpeg", 0.95);
   }
 };
 
@@ -592,3 +592,4 @@ document.addEventListener('click', e => {
 </script>
 </body>
 </html>
+
