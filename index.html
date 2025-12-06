@@ -30,33 +30,34 @@
   .right{text-align:right}
   .del{border:none;background:transparent;color:var(--danger);cursor:pointer}
   .dropdown {position: relative;display: inline-block;width: 250px;z-index: 1000;}
-  .dropdown-toggle {padding: 10px;background: #2a2f3d;color: #fff;cursor: pointer;border-radius: 8px;}
-  .dropdown-menu {display: none;position: absolute;background: #171a21;border: 1px solid #333;width: 100%;max-height: 300px;overflow-y: auto;border-radius: 8px;z-index: 10;}
-  .group-label {padding: 10px;cursor: pointer;background: #1e232c;font-weight: bold;color: #4aa3ff;}
-  .group-options {display: none;}
-  .group-options div {padding: 8px 14px;cursor: pointer;color: #e7ecf3;}
-  .group-options div:hover {background: #2a2f3d;}
+.dropdown-toggle {padding: 10px;background: #2a2f3d;color: #fff;cursor: pointer;border-radius: 8px;}
+.dropdown-menu {display: none;position: absolute;background: #171a21;border: 1px solid #333;width: 100%;max-height: 300px;overflow-y: auto;border-radius: 8px;z-index: 10;}
+.group-label {padding: 10px;cursor: pointer;background: #1e232c;font-weight: bold;color: #4aa3ff;}
+.group-options {display: none;}
+.group-options div {padding: 8px 14px;cursor: pointer;color: #e7ecf3;}
+.group-options div:hover {background: #2a2f3d;}
   .edit, .del {font-size: 18px;padding: 6px 10px;border: none;background: transparent;cursor: pointer;}
   
   @media (max-width: 600px) {
-    h1 {font-size: 18px;text-align: center;}
-    .grid, .row {display: block;}
-    input, select, textarea {font-size: 16px;padding: 12px;border-radius: 10px;}
-    label {font-size: 13px;margin-bottom: 4px;}
-    .btns {flex-direction: column;align-items: stretch;}
-    .btn {width: 70%;padding: 14px;font-size: 16px;}
-    .pill, .pillr {display: inline-block;margin-bottom: 6px;}
-    .dropdown {width: 70%;}
-    .dropdown-toggle {padding: 12px;font-size: 16px;}
-    .dropdown-menu {max-height: 220px;font-size: 15px;}
-    .table-wrap {overflow-x: auto;}
-    table {font-size: 13px;}
-    th, td {padding: 8px 6px;white-space: nowrap;}
-    .edit, .del {font-size: 16px;padding: 4px;}
-    #orderInfo div {font-size: 14px;}
-    #sortSelect {font-size: 14px;padding: 8px;margin-top: 14px;}
-    #notes {font-size: 14px;}
-  }
+  h1 {font-size: 18px;text-align: center;}
+.grid, .row {display: block;}
+input, select, textarea {font-size: 16px;padding: 12px;border-radius: 10px;}
+label {font-size: 13px;margin-bottom: 4px;}
+.btns {flex-direction: column;align-items: stretch;}
+.btn {width: 70%;padding: 14px;font-size: 16px;}
+.pill, .pillr {display: inline-block;margin-bottom: 6px;}
+.dropdown {width: 70%;}
+.dropdown-toggle {padding: 12px;font-size: 16px;}
+.dropdown-menu {max-height: 220px;font-size: 15px;}
+.table-wrap {overflow-x: auto;}
+table {font-size: 13px;}
+th, td {padding: 8px 6px;white-space: nowrap;}
+.edit, .del {font-size: 16px;padding: 4px;}
+#orderInfo div {font-size: 14px;}
+#sortSelect {font-size: 14px;padding: 8px;margin-top: 14px;}
+#notes {font-size: 14px;}
+}
+
 </style>
 </head>
 <body>
@@ -65,27 +66,87 @@
     <h1>Заказ рольштор</h1>
     <div class="grid">
       <div><label>Дата заказа:</label><input id="date" type="date" title="Укажите дату оформления заказа"></div>
-      <div><label>Номер заказа:</label><input id="numb" type="number" title="Введите номер для отслеживания"></div>
+       <div><label>Номер заказа:</label><input id="numb" type="number" title="Введите номер для отслеживания"></div>
       <div><label>Заказчик:</label><input id="customer" type="text" placeholder="ИП 'Успешный'" title="Укажите имя или компанию заказчика"></div>
+      <br>
+
       <input type="hidden" name="system" id="systemInput" value="">
+      
       <div class="dropdown" id="systemDropdown">
-        <div class="dropdown-toggle">Выберите систему</div> <br>
-        <div class="dropdown-menu">
-          <!-- Здесь список систем, как в твоем коде -->
-        </div>
+  <div class="dropdown-toggle">Выберите систему</div> <br>
+  <div class="dropdown-menu">
+    <div class="group">
+      <div class="group-label">MINI</div>
+      <div class="group-options">
+        <div data-value="mini">MINI</div>
+        <div data-value="mini d/n">MINI D/N</div>
       </div>
+    </div>
+    <div class="group">
+      <div class="group-label">MG</div>
+      <div class="group-options">
+        <div data-value="mgII">MG II низкий/высокий металл</div>
+        <div data-value="mgs">MGS</div>
+        <div data-value="mgs d/n">MGS D/N</div>
+      </div>
+    </div>
+    <div class="group">
+      <div class="group-label">UNI</div>
+      <div class="group-options">
+        <div data-value="Uni-1">Uni-1</div>
+        <div data-value="Uni-2">Uni-2</div>
+        <div data-value="Uni-2 d/n">Uni-2 D/N</div>
+      </div>
+      </div>
+    <div class="group">
+      <div class="group-label">B серия</div>
+      <div class="group-options">
+        <div data-value="b5">b5</div>
+        <div data-value="b7">b7</div>
+        <div data-value="b9">b9</div>
+        <div data-value="b11">b11</div>
+      </div>
+      </div>
+       <div class="group">
+      <div class="group-label">US серия</div>
+      <div class="group-options">
+        <div data-value="us 38 Standart">us 38 Standart</div>
+        <div data-value="us 38 lux">us 38 lux</div>
+        <div data-value="us 38 lux D/N">us 38 lux D/N</div>
+        <div data-value="us 38 Cassette">us 38 Cassette</div>
+        <div data-value="us 38 Fabric">us 38 Fabric</div>
+        <div data-value="us 38 Square">us 38 Square</div>
+        <div data-value="us 45">us45</div>
+      </div>
+      </div>
+    <div class="group">
+      <div class="group-label">Автоматика</div>
+      <div class="group-options">
+        <div data-value="Uni-2 E!">Uni-2</div>
+        <div data-value="us 38 Standart E!">us 38 Standart</div>
+        <div data-value="us 38 lux E!">us 38 lux</div>
+        <div data-value="us 38 lux D/N E!">us 38 lux D/N</div>
+        <div data-value="us 38 Cassette E!">us 38 Cassette</div>
+        <div data-value="us 38 Fabric E!">us 38 Fabric</div>
+        <div data-value="us 38 Square E!">us 38 Square</div>
+        <div data-value="us 45 E!">us 45</div>
+      </div>
+      </div>
+      </div>
+</div>
       <div><label>Цвет ткани:</label><input id="color" type="text" pattern="[0-9\-]+" maxlength="6" placeholder="721-01" title="Код ткани (например, 721-01)"></div>
       <div class="row">
         <div><label>Ширина, см:</label><input id="width" type="number" min="0.1" step="0.1" title="Укажите ширину изделия в сантиметрах"></div>
         <div><label>Высота, см:</label><input id="height" type="number" min="0.1" step="0.1" title="Укажите высоту изделия в сантиметрах"></div>
       </div>
-      <div><label>По чем размеры</label>
-        <div id="basis" title="Выберите, по каким параметрам заданы размеры">
+        <div><label>По чем размеры</label>
+            <div id="basis" title="Выберите, по каким параметрам заданы размеры">
           <span class="pillr" data-val="ВГШ" title="Внешний габарит штапика">ВГШ</span>
           <span class="pillr" data-val="по Ткани" title="Размеры только по ткани">по Ткани</span>
           <span class="pillr" data-val="по Габаритам" title="Полный габарит изделия">по Габаритам</span>
-        </div>   
-      </div>
+              </div>   
+        </div>
+
       <div><label>Сторона управления:</label>
         <div id="sideGroup" title="Выберите сторону расположения управления">
           <span class="pill" data-val="слева" title="Механизм управления слева">Слева</span>
@@ -93,28 +154,43 @@
         </div>
       </div>
       <div><label>Количество изделий:</label><input id="qty" type="number" min="1" step="1" title="Сколько одинаковых изделий добавить"></div>
+      <br>
       <div style="align-self:end"><button class="btn primary" id="addBtn" title="Добавить изделие в таблицу ниже">Добавить в заказ</button></div>
+      <br>
     </div>
-
-    <div id="orderInfo" style="margin-top:20px;margin-bottom:10px;display:none;">
-       <div><strong>Дата заказа:</strong> <span id="dateNumberDisplay"></span></div>
-      <div><strong>Номер заказа:</strong> <span id="orderNumberDisplay"></span></div>
-      <div><strong>Заказчик:</strong> <span id="customerDisplay"></span></div>
-    </div>
-
+    
+<div id="orderInfo" style="margin-top:20px;margin-bottom:10px;display:none;">
+   <div><strong>Дата заказа:</strong> <span id="dateNumberDisplay"></span></div>
+  <div><strong>Номер заказа:</strong> <span id="orderNumberDisplay"></span></div>
+  <div><strong>Заказчик:</strong> <span id="customerDisplay"></span></div>
+</div>
+    
+    
     <div class="table-wrap">
       <table id="ordersTable">
         <thead><tr><th>#</th><th>Система</th><th>Цвет</th><th>Ширина(См)</th><th>Высота(См)</th><th>Размеры</th><th>Управление</th><th>Кол-во</th><th></th></tr></thead>
         <tbody id="tbody"><tr><td colspan="8" style="color:#8a94a7">Нет позиций</td></tr></tbody>
       </table>
     </div>
+    
+<div style="margin-top:12px; display: flex; gap: 12px; align-items: center;">
+  <label style="font-size:13px; color: var(--muted);">
+    Сортировать по:
+    <select id="sortSelect" style="padding:6px 10px;border-radius:6px;background:#10131a;color:#e7ecf3;border:1px solid #2a2f3d;margin-left:6px;">
+      <option value="">Нет</option>
+      <option value="system">Системе</option>
+      <option value="width">Ширине</option>
+      <option value="color">Цвету ткани</option>
+    </select>
+  </label>
+</div>
 
+    
     <div style="margin-top:16px;">
-      <label for="notes" style="color:var(--muted);font-size:13px;">Примечание:</label>
-      <textarea id="notes" rows="3" style="width:100%;padding:10px;border-radius:10px;border:1px solid #2a2f3d;background:#10131a;color:#e7ecf3;"></textarea>
-    </div>
-
-    <div class="btns">
+  <label for="notes" style="color:var(--muted);font-size:13px;">Примечание:</label>
+  <textarea id="notes" rows="3" style="width:100%;padding:10px;border-radius:10px;border:1px solid #2a2f3d;background:#10131a;color:#e7ecf3;"></textarea>
+</div>
+      <div class="btns">
       <button class="btn primary" id="saveJpeg" title="Сохранить заказ как изображение (JPEG)">Сохранить JPEG</button>
       <button class="btn secondary" id="clearBtn" title="Очистить таблицу и форму">Очистить</button> 
     </div>
@@ -124,107 +200,401 @@
 <script>
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
 let rows=[];
+  
+  // Приоритет сортировки систем
+const systemOrder = [
+  "mini", "mini d/n",
+  "mgII", "mgs", "mgs d/n",
+  "Uni-1", "Uni-2", "Uni-2 d/n",
+  "b5", "b7", "b9", "b11",
+  "us 38 Standart", "us 38 lux", "us 38 lux D/N", "us 38 Cassette", "us 38 Fabric", "us 38 Square", "us 45",
+  "Uni-2 E!", "us 38 Standart E!", "us 38 lux E!", "us 38 lux D/N E!", "us 38 Cassette E!", "us 38 Fabric E!", "us 38 Square E!", "us 45 E!"
+];
 
-// --- твой код для добавления/удаления/редактирования строк и выпадающего списка ---
-/* ... оставляем весь код, который был у тебя, кроме функции $("#saveJpeg").onclick ... */
+    
+    // по чём размеры
+$("#basis").onclick=e=>{
+  const p=e.target.closest(".pillr");
+  if(!p)return;
+  $$(".pillr").forEach(x=>x.classList.remove("active"));
+  p.classList.add("active");
+};
+function getBasis() {
+  const active = $("#basis .active");
+  return active ? active.dataset.val : null;
+}
 
-// --- Новая версия JPEG для мобильного Telegram ---
+
+// управление
+$("#sideGroup").onclick=e=>{
+  const p=e.target.closest(".pill");
+  if(!p)return;
+  $$(".pill").forEach(x=>x.classList.remove("active"));
+  p.classList.add("active");
+};
+function getSide() {
+  const active = $("#sideGroup .active");
+  return active ? active.dataset.val : null;
+}
+
+// отрисовка таблицы
+function render() {
+  const tb = $("#tbody");
+  tb.innerHTML = "";
+
+  if (!rows.length) {
+    tb.innerHTML = `<tr><td colspan=8 style="color:#8a94a7">Нет позиций</td></tr>`;
+    return;
+  }
+
+  const sortMode = $("#sortSelect").value;
+  let displayRows = [...rows];
+
+  if (sortMode === "system") {
+    displayRows.sort((a, b) => {
+      const aIndex = systemOrder.indexOf(a.system);
+      const bIndex = systemOrder.indexOf(b.system);
+      if (aIndex === -1 && bIndex === -1) return 0;
+      if (aIndex === -1) return 1;
+      if (bIndex === -1) return -1;
+      return aIndex - bIndex;
+    });
+  } else if (sortMode === "width") {
+    displayRows.sort((a, b) => a.width - b.width);
+  } else if (sortMode === "color") {
+    displayRows.sort((a, b) => a.color.localeCompare(b.color, 'ru', { sensitivity: 'base' }));
+  }
+
+  displayRows.forEach((r, i) => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `<td>${i + 1}</td><td>${r.system}</td><td>${r.color}</td><td class=right>${r.width}</td><td class=right>${r.height}</td>
+      <td><span class=tag>${r.basis}</span></td><td>${r.side}</td><td class=right>${r.qty}</td>
+      <td><button class="edit" title="Редактировать" data-i="${i}">✏️</button>
+  <button class="del" title="Удалить" data-i="${i}">✕</button></td>`;
+    tb.appendChild(tr);
+  });
+
+  $$("#tbody .del").forEach(b => b.onclick = () => {
+    const index = b.dataset.i;
+    rows.splice(index, 1);
+    render();
+  });
+}
+  
+  // обновлять таблицу при смене типа сортировки
+$("#sortSelect").addEventListener("change", () => {
+  render();
+});
+
+
+// кнопки
+ 
+   $("#addBtn").onclick = () => {
+  const color = $("#color").value.trim();
+  const w = parseFloat($("#width").value.replace(",", "."));
+  const h = parseFloat($("#height").value.replace(",", "."));
+  const q = +$("#qty").value;
+       
+  const basis = getBasis();
+  const side = getSide();   
+  const system = $("#systemInput").value;
+     
+  if (!system) return alert("Выберите систему");
+  if (!color || !w || !h || !q) return alert("Заполните все поля");
+  if (!basis) return alert("Выберите, по чем размеры");
+  if (!side) return alert("Выберите сторону управления");
+     
+     // Показать заказчика и номер заказа
+$("#dateNumberDisplay").textContent = $("#date").value.trim();
+$("#orderNumberDisplay").textContent = $("#numb").value.trim();
+$("#customerDisplay").textContent = $("#customer").value.trim();
+$("#orderInfo").style.display = "block";
+
+  rows.push({
+    system,
+    color,
+    width: w,
+    height: h,
+    basis,
+    side,
+    qty: q
+  });
+     render();
+     
+ // Очистить всё
+$("#clearBtn").onclick = () => {
+  const hasTableData = rows.length > 0;
+  const hasFormData = $("#date").value || $("#numb").value || $("#customer").value ||
+                      $("#systemInput").value || $("#color").value ||
+                      $("#width").value || $("#height").value || $("#qty").value || $("#notes").value;
+
+  if (!hasTableData && !hasFormData) return; // ничего не заполнено
+
+  if (confirm("Очистить все данные заказа и таблицу?")) {
+    // Очистить таблицу
+    rows = [];
+    render();
+
+    // Очистить форму
+    $("#date").value = "";
+    $("#numb").value = "";
+    $("#customer").value = "";
+    $("#systemInput").value = "";
+    $("#color").value = "";
+    $("#width").value = "";
+    $("#height").value = "";
+    $("#qty").value = "";
+    $("#notes").value = "";
+
+    // Сброс выпадающего списка "система"
+    const toggle = $(".dropdown-toggle");
+    toggle.textContent = "Выберите систему";
+    delete toggle.dataset.value;
+
+    // Сброс активных плашек
+    $$("#basis .pillr").forEach(el => el.classList.remove("active"));
+    $$("#sideGroup .pill").forEach(el => el.classList.remove("active"));
+
+    // Скрыть отображение информации о заказе
+    $("#orderInfo").style.display = "none";
+    $("#dateNumberDisplay").textContent = "";
+    $("#orderNumberDisplay").textContent = "";
+    $("#customerDisplay").textContent = "";
+  }
+};
+
+       
+  render();
+     
+       $$("#tbody .edit").forEach(b => b.onclick = () => {
+    const index = b.dataset.i;
+    const item = rows[index];
+
+    // Заполняем форму значениями из строки
+    $("#systemInput").value = item.system;
+    $(".dropdown-toggle").textContent = item.system;
+
+    $("#color").value = item.color;
+    $("#width").value = item.width;
+    $("#height").value = item.height;
+    $("#qty").value = item.qty;
+
+    // Сброс и выбор плашек
+    $$("#basis .pillr").forEach(el => el.classList.remove("active"));
+    const basisEl = $(`#basis .pillr[data-val="${item.basis}"]`);
+    if (basisEl) basisEl.classList.add("active");
+
+    $$("#sideGroup .pill").forEach(el => el.classList.remove("active"));
+    const sideEl = $(`#sideGroup .pill[data-val="${item.side}"]`);
+    if (sideEl) sideEl.classList.add("active");
+
+    // Удаляем строку
+    rows.splice(index, 1);
+    render();
+  });
+
+
+  // Сброс формы после нажатия кнопки добавить
+
+  //$("#date").value = "";
+  //$("#numb").value = "";
+  $("#width").value = "";
+  $("#height").value = "";
+  $("#qty").value = "";
+  //$("#customer").value = "";
+       
+  $$("#basis .pillr").forEach(el => el.classList.remove("active"));
+  const defaultBasis = $$("#basis .pillr")[0];
+  if (defaultBasis) defaultBasis.classList.add("active");
+
+  $$("#sideGroup .pill").forEach(el => el.classList.remove("active"));
+  const defaultSide = Array.from($$("#sideGroup .pill")).find(el => el.dataset.val === "");
+  if (defaultSide) defaultSide.classList.add("active");
+     
+     // Очистка отображения данных заказа после нажатия кнопки добавить
+  //$("#dateNumberDisplay").textContent = "";
+  //$("#orderNumberDisplay").textContent = "";
+     
+};
+
+    
+    
+// --- JPEG экспорт с разбивкой на страницы A4 ---
 $("#saveJpeg").onclick = () => {
-  if (!rows.length) { alert("Таблица пуста"); return; }
+  if (!rows.length) {
+    alert("Таблица пуста");
+    return;
+  }
 
+  // A4 landscape: 842 x 595 при 96 DPI
   const pageWidth = 842;
   const pageHeight = 595;
   const margin = 40;
   const dpi = 2;
-  const contentWidth = pageWidth - margin*2;
 
+  const contentWidth = pageWidth - margin * 2;
+
+  // Данные формы
   const dateNumber = $("#date").value.trim();
   const orderNumber = $("#numb").value.trim();
   const customer = $("#customer").value.trim();
   const notes = $("#notes").value.trim();
 
-  const headers = ["#", "Система", "Цвет", "Ширина", "Высота", "Размеры", "Управление", "Кол-во","Примечание"];
-  const colW = [40, 100, 100, 70, 70, 85, 85, 60, 153];
+  const headers = ["#", "Система", "Цвет", "Ширина", "Высота", "Размеры", "Управление", "Кол-во","Для заметок"];
+  const colW = [40, 100, 100, 70, 70, 85, 85, 60,153]; // сумма = 610 + 153
 
   const rowH = 28;
   const headH = 36;
   const orderInfoH = 60;
+  const notesH = notes ? 70 : 0;
 
-  const availableHeight = pageHeight - margin*2 - orderInfoH - headH;
-  const maxRows = Math.floor(availableHeight/rowH);
-  const totalPages = Math.ceil(rows.length/maxRows);
+  const availableHeight = pageHeight - margin * 2 - orderInfoH - headH;
+  const maxRows = Math.floor(availableHeight / rowH);
+  const totalPages = Math.ceil(rows.length / maxRows);
 
-  for (let page=0; page<totalPages; page++){
+  for (let page = 0; page < totalPages; page++) {
     const canvas = document.createElement("canvas");
-    canvas.width = pageWidth*dpi;
-    canvas.height = pageHeight*dpi;
+    canvas.width = pageWidth * dpi;
+    canvas.height = pageHeight * dpi;
 
     const ctx = canvas.getContext("2d");
-    ctx.scale(dpi,dpi);
+    ctx.scale(dpi, dpi);
 
     // Белый фон
-    ctx.fillStyle = "#fff";
-    ctx.fillRect(0,0,pageWidth,pageHeight);
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, pageWidth, pageHeight);
 
     let xStart = margin;
     let yStart = margin;
 
-    // Заголовки
+    // --- Блок: Заголовки заказа ---
     ctx.fillStyle = "#000";
     ctx.font = "bold 16px Arial";
     ctx.textBaseline = "top";
-    ctx.fillText(`Дата заказа: ${dateNumber||"-"}`, xStart, yStart);
-    ctx.fillText(`Номер заказа: ${orderNumber||"-"}`, xStart+210, yStart);
-    ctx.fillText(`Заказчик: ${customer||"-"}`, xStart+420, yStart);
+    ctx.fillText(`Дата заказа: ${dateNumber || "-"}`, xStart, yStart);
+    ctx.fillText(`Номер заказа: ${orderNumber || "-"}`, xStart + 210, yStart);
+    ctx.fillText(`Заказчик: ${customer || "-"}`, xStart + 420, yStart);
 
-    // Заголовки таблицы
+    // --- Блок: Заголовки таблицы ---
     yStart += orderInfoH;
     ctx.fillStyle = "#ddd";
-    ctx.fillRect(xStart,yStart,contentWidth,headH);
+    ctx.fillRect(xStart, yStart, contentWidth, headH);
 
     let colX = xStart;
-    headers.forEach((header,i)=>{
-      ctx.fillStyle="#000";
-      ctx.font="bold 13px Arial";
-      ctx.fillText(header, colX+6, yStart+10);
-      ctx.strokeStyle="#999";
+    headers.forEach((header, i) => {
+      ctx.fillStyle = "#000";
+      ctx.font = "bold 13px Arial";
+      ctx.fillText(header, colX + 6, yStart + 10);
+      ctx.strokeStyle = "#999";
       ctx.strokeRect(colX, yStart, colW[i], headH);
       colX += colW[i];
     });
 
-    // Строки
-    const startRow = page*maxRows;
-    const endRow = Math.min(startRow+maxRows, rows.length);
-    const currentRows = rows.slice(startRow,endRow);
+    // --- Строки таблицы ---
+    const startRow = page * maxRows;
+    const endRow = Math.min(startRow + maxRows, rows.length);
+    const currentRows = rows.slice(startRow, endRow);
 
-    currentRows.forEach((r,i)=>{
-      const y = yStart + headH + i*rowH;
-      const row = [startRow+i+1, r.system, r.color, r.width, r.height, r.basis, r.side, r.qty, notes||""];
+    currentRows.forEach((r, i) => {
+      const y = yStart + headH + i * rowH;
+      const row = [startRow + i + 1, r.system, r.color, r.width, r.height, r.basis, r.side, r.qty];
       let xx = xStart;
 
-      ctx.fillStyle = i%2 ? "#f8f8f8" : "#fff";
+      ctx.fillStyle = i % 2 ? "#f8f8f8" : "#ffffff";
       ctx.fillRect(xStart, y, contentWidth, rowH);
 
-      row.forEach((cell,ci)=>{
-        ctx.strokeStyle="#ccc";
+      row.forEach((cell, ci) => {
+        ctx.strokeStyle = "#ccc";
         ctx.strokeRect(xx, y, colW[ci], rowH);
-        ctx.fillStyle="#000";
-        ctx.font="13px Arial";
-        ctx.fillText(cell, xx+6, y+8);
+
+        ctx.fillStyle = "#000";
+        ctx.font = "13px Arial";
+        ctx.fillText(cell, xx + 6, y + 8);
         xx += colW[ci];
       });
     });
 
-    // Номер страницы
-    ctx.fillStyle="#999";
-    ctx.font="12px Arial";
-    ctx.fillText(`Страница ${page+1} из ${totalPages}`, pageWidth-margin-120, pageHeight-margin+5);
+    // --- Примечание — только на последней странице ---
+    if (page === totalPages - 1 && notes) {
+      const yNotes = yStart + headH + currentRows.length * rowH + 10;
+      ctx.fillStyle = "#444";
+      ctx.font = "italic 13px Arial";
+      ctx.fillText("Примечание:", xStart, yNotes);
 
-    // Открываем в новой вкладке для сохранения на мобильном
-    const imageUrl = canvas.toDataURL("image/jpeg", 0.95);
-    window.open(imageUrl,"_blank");
-  }
+      ctx.fillStyle = "#222";
+      ctx.font = "13px Arial";
+      notes.split('\n').forEach((line, i) => {
+        ctx.fillText(line, xStart, yNotes + 20 + i * 16, contentWidth - 10);
+      });
+    }
+
+    // --- Номер страницы ---
+    ctx.fillStyle = "#999";
+    ctx.font = "12px Arial";
+    ctx.fillText(`Страница ${page + 1} из ${totalPages}`, pageWidth - margin - 120, pageHeight - margin + 5);
+
+    // --- Сохранить как JPEG ---
+const imgData = canvas.toDataURL("image/jpeg", 0.95);
+
+// открыть в новой вкладке — пользователь сам может сохранить изображение
+const w = window.open();
+if (w) {
+  w.document.write(`<img src="${imgData}" style="width:100%;height:auto;"/>`);
+  w.document.title = `rolshtory_page_${page + 1}.jpg`;
+} else {
+  alert("Разрешите всплывающие окна, чтобы сохранить изображение");
+}
+}
 };
+
+
+
+
+render();
+  
+  //выпадающий список с выбором систем
+  
+const dropdown = document.getElementById('systemDropdown');
+const toggle = dropdown.querySelector('.dropdown-toggle');
+const menu = dropdown.querySelector('.dropdown-menu');
+const labels = dropdown.querySelectorAll('.group-label');
+const options = dropdown.querySelectorAll('.group-options div');
+
+// открыть/закрыть выпадашку
+toggle.onclick = () => {
+  menu.style.display = menu.style.display === 'block' ? 'none' : 'block';
+};
+
+// по клику на группу — открыть/закрыть вложенные опции
+labels.forEach(label => {
+  label.onclick = () => {
+    const options = label.nextElementSibling;
+    const isOpen = options.style.display === 'block';
+    dropdown.querySelectorAll('.group-options').forEach(o => o.style.display = 'none');
+    options.style.display = isOpen ? 'none' : 'block';
+  };
+});
+
+// выбор значения
+options.forEach(opt => {
+  opt.onclick = () => {
+    toggle.textContent = opt.textContent;
+    toggle.dataset.value = opt.dataset.value;
+    menu.style.display = 'none';
+  // Подставляем в форму
+      const systemInput = document.getElementById('systemInput');
+      if (systemInput) systemInput.value = opt.dataset.value;
+  };
+});
+
+// клик вне — закрыть
+document.addEventListener('click', e => {
+  if (!dropdown.contains(e.target)) {
+    menu.style.display = 'none';
+    dropdown.querySelectorAll('.group-options').forEach(o => o.style.display = 'none');
+  }
+}); 
+  
 </script>
 </body>
 </html>
