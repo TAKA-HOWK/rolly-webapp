@@ -198,15 +198,6 @@ th, td {padding: 8px 6px;white-space: nowrap;}
 </div>
 
 <script>
-
-  document.addEventListener('DOMContentLoaded', () => {
-    if (window.Telegram && Telegram.WebApp) {
-        Telegram.WebApp.ready();
-    } else {
-        alert("Откройте WebApp через Telegram");
-    }
-});
-  
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
 let rows=[];
   
@@ -432,10 +423,8 @@ $("#clearBtn").onclick = () => {
 $("#saveJpeg").onclick = () => {
   if (!rows.length) {
     alert("Таблица пуста");
-  if (!window.Telegram || !Telegram.WebApp) {
-        alert("Откройте WebApp через Telegram");
-        return;
-    }
+    return;
+  }
 
   // A4 landscape: 842 x 595 при 96 DPI
   const pageWidth = 842;
@@ -546,8 +535,6 @@ $("#saveJpeg").onclick = () => {
 
     // --- Сохранить как JPEG ---
 const imgData = canvas.toDataURL("image/jpeg", 0.95);
-       Telegram.WebApp.sendData(imgData); // Отправка боту
-};
 if (window.Telegram && Telegram.WebApp) {
     Telegram.WebApp.sendData(imgData);
 } else {
@@ -607,5 +594,4 @@ document.addEventListener('click', e => {
 </script>
 </body>
 </html>
-
 
