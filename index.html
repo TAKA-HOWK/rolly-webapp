@@ -199,18 +199,18 @@ th, td {padding: 8px 6px;white-space: nowrap;}
 
 <script>
 
-  document.addEventListener('DOMContentLoaded', () => {
-    if (window.Telegram && Telegram.WebApp) {
-        Telegram.WebApp.ready();
-    } else {
-        alert("Откройте WebApp через Telegram");
-    }
+document.addEventListener('DOMContentLoaded', () => {
+  if (window.Telegram && Telegram.WebApp) {
+      Telegram.WebApp.ready();
+  } else {
+      alert("Откройте WebApp через Telegram");
+  }
 });
-  
+
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
 let rows=[];
-  
-  // Приоритет сортировки систем
+
+// Приоритет сортировки систем
 const systemOrder = [
   "mini", "mini d/n",
   "mgII", "mgs", "mgs d/n",
@@ -220,8 +220,7 @@ const systemOrder = [
   "Uni-2 E!", "us 38 Standart E!", "us 38 lux E!", "us 38 lux D/N E!", "us 38 Cassette E!", "us 38 Fabric E!", "us 38 Square E!", "us 45 E!"
 ];
 
-    
-    // по чём размеры
+// --- Функции для плашек ---
 $("#basis").onclick=e=>{
   const p=e.target.closest(".pillr");
   if(!p)return;
@@ -233,8 +232,6 @@ function getBasis() {
   return active ? active.dataset.val : null;
 }
 
-
-// управление
 $("#sideGroup").onclick=e=>{
   const p=e.target.closest(".pill");
   if(!p)return;
@@ -246,7 +243,7 @@ function getSide() {
   return active ? active.dataset.val : null;
 }
 
-// отрисовка таблицы
+// --- Рендер таблицы ---
 function render() {
   const tb = $("#tbody");
   tb.innerHTML = "";
@@ -288,98 +285,11 @@ function render() {
     rows.splice(index, 1);
     render();
   });
-}
-  
-  // обновлять таблицу при смене типа сортировки
-$("#sortSelect").addEventListener("change", () => {
-  render();
-});
 
-
-// кнопки
- 
-   $("#addBtn").onclick = () => {
-  const color = $("#color").value.trim();
-  const w = parseFloat($("#width").value.replace(",", "."));
-  const h = parseFloat($("#height").value.replace(",", "."));
-  const q = +$("#qty").value;
-       
-  const basis = getBasis();
-  const side = getSide();   
-  const system = $("#systemInput").value;
-     
-  if (!system) return alert("Выберите систему");
-  if (!color || !w || !h || !q) return alert("Заполните все поля");
-  if (!basis) return alert("Выберите, по чем размеры");
-  if (!side) return alert("Выберите сторону управления");
-     
-     // Показать заказчика и номер заказа
-$("#dateNumberDisplay").textContent = $("#date").value.trim();
-$("#orderNumberDisplay").textContent = $("#numb").value.trim();
-$("#customerDisplay").textContent = $("#customer").value.trim();
-$("#orderInfo").style.display = "block";
-
-  rows.push({
-    system,
-    color,
-    width: w,
-    height: h,
-    basis,
-    side,
-    qty: q
-  });
-     render();
-     
- // Очистить всё
-$("#clearBtn").onclick = () => {
-  const hasTableData = rows.length > 0;
-  const hasFormData = $("#date").value || $("#numb").value || $("#customer").value ||
-                      $("#systemInput").value || $("#color").value ||
-                      $("#width").value || $("#height").value || $("#qty").value || $("#notes").value;
-
-  if (!hasTableData && !hasFormData) return; // ничего не заполнено
-
-  if (confirm("Очистить все данные заказа и таблицу?")) {
-    // Очистить таблицу
-    rows = [];
-    render();
-
-    // Очистить форму
-    $("#date").value = "";
-    $("#numb").value = "";
-    $("#customer").value = "";
-    $("#systemInput").value = "";
-    $("#color").value = "";
-    $("#width").value = "";
-    $("#height").value = "";
-    $("#qty").value = "";
-    $("#notes").value = "";
-
-    // Сброс выпадающего списка "система"
-    const toggle = $(".dropdown-toggle");
-    toggle.textContent = "Выберите систему";
-    delete toggle.dataset.value;
-
-    // Сброс активных плашек
-    $$("#basis .pillr").forEach(el => el.classList.remove("active"));
-    $$("#sideGroup .pill").forEach(el => el.classList.remove("active"));
-
-    // Скрыть отображение информации о заказе
-    $("#orderInfo").style.display = "none";
-    $("#dateNumberDisplay").textContent = "";
-    $("#orderNumberDisplay").textContent = "";
-    $("#customerDisplay").textContent = "";
-  }
-};
-
-       
-  render();
-     
-       $$("#tbody .edit").forEach(b => b.onclick = () => {
+  $$("#tbody .edit").forEach(b => b.onclick = () => {
     const index = b.dataset.i;
     const item = rows[index];
 
-    // Заполняем форму значениями из строки
     $("#systemInput").value = item.system;
     $(".dropdown-toggle").textContent = item.system;
 
@@ -388,7 +298,6 @@ $("#clearBtn").onclick = () => {
     $("#height").value = item.height;
     $("#qty").value = item.qty;
 
-    // Сброс и выбор плашек
     $$("#basis .pillr").forEach(el => el.classList.remove("active"));
     const basisEl = $(`#basis .pillr[data-val="${item.basis}"]`);
     if (basisEl) basisEl.classList.add("active");
@@ -397,21 +306,39 @@ $("#clearBtn").onclick = () => {
     const sideEl = $(`#sideGroup .pill[data-val="${item.side}"]`);
     if (sideEl) sideEl.classList.add("active");
 
-    // Удаляем строку
     rows.splice(index, 1);
     render();
   });
+}
 
+// --- Добавление новой строки ---
+$("#addBtn").onclick = () => {
+  const color = $("#color").value.trim();
+  const w = parseFloat($("#width").value.replace(",", "."));
+  const h = parseFloat($("#height").value.replace(",", "."));
+  const q = +$("#qty").value;
 
-  // Сброс формы после нажатия кнопки добавить
+  const basis = getBasis();
+  const side = getSide();   
+  const system = $("#systemInput").value;
 
-  //$("#date").value = "";
-  //$("#numb").value = "";
+  if (!system) return alert("Выберите систему");
+  if (!color || !w || !h || !q) return alert("Заполните все поля");
+  if (!basis) return alert("Выберите, по чем размеры");
+  if (!side) return alert("Выберите сторону управления");
+
+  $("#dateNumberDisplay").textContent = $("#date").value.trim();
+  $("#orderNumberDisplay").textContent = $("#numb").value.trim();
+  $("#customerDisplay").textContent = $("#customer").value.trim();
+  $("#orderInfo").style.display = "block";
+
+  rows.push({system,color,width:w,height:h,basis,side,qty:q});
+  render();
+
   $("#width").value = "";
   $("#height").value = "";
   $("#qty").value = "";
-  //$("#customer").value = "";
-       
+
   $$("#basis .pillr").forEach(el => el.classList.remove("active"));
   const defaultBasis = $$("#basis .pillr")[0];
   if (defaultBasis) defaultBasis.classList.add("active");
@@ -419,193 +346,130 @@ $("#clearBtn").onclick = () => {
   $$("#sideGroup .pill").forEach(el => el.classList.remove("active"));
   const defaultSide = Array.from($$("#sideGroup .pill")).find(el => el.dataset.val === "");
   if (defaultSide) defaultSide.classList.add("active");
-     
-     // Очистка отображения данных заказа после нажатия кнопки добавить
-  //$("#dateNumberDisplay").textContent = "";
-  //$("#orderNumberDisplay").textContent = "";
-     
 };
 
-    
-    
-// --- JPEG экспорт с разбивкой на страницы A4 ---
+// --- Очистка формы ---
+$("#clearBtn").onclick = () => {
+  if (!rows.length && !$("#date").value && !$("#numb").value && !$("#customer").value) return;
+  if (!confirm("Очистить все данные заказа и таблицу?")) return;
+
+  rows = [];
+  render();
+
+  $("#date").value = "";
+  $("#numb").value = "";
+  $("#customer").value = "";
+  $("#systemInput").value = "";
+  $("#color").value = "";
+  $("#width").value = "";
+  $("#height").value = "";
+  $("#qty").value = "";
+  $("#notes").value = "";
+
+  $(".dropdown-toggle").textContent = "Выберите систему";
+
+  $$("#basis .pillr").forEach(el => el.classList.remove("active"));
+  $$("#sideGroup .pill").forEach(el => el.classList.remove("active"));
+
+  $("#orderInfo").style.display = "none";
+  $("#dateNumberDisplay").textContent = "";
+  $("#orderNumberDisplay").textContent = "";
+  $("#customerDisplay").textContent = "";
+};
+
+// --- Сортировка ---
+$("#sortSelect").addEventListener("change", render);
+
+// --- Экспорт в JPEG для Telegram ---
 $("#saveJpeg").onclick = () => {
-  if (!rows.length) {
-    alert("Таблица пуста");
-  if (!window.Telegram || !Telegram.WebApp) {
-        alert("Откройте WebApp через Telegram");
-        return;
-    }
+  if (!rows.length) return alert("Таблица пуста");
+  if (!window.Telegram || !Telegram.WebApp) return alert("Откройте WebApp через Telegram");
 
-  // A4 landscape: 842 x 595 при 96 DPI
-  const pageWidth = 842;
-  const pageHeight = 595;
-  const margin = 40;
-  const dpi = 2;
+  const pageWidth = 842, pageHeight = 595, margin = 40, dpi = 2;
+  const contentWidth = pageWidth - margin*2;
+  const rowH = 28, headH = 36, orderInfoH = 60;
 
-  const contentWidth = pageWidth - margin * 2;
+  const dateNumber = $("#date").value.trim() || "-";
+  const orderNumber = $("#numb").value.trim() || "-";
+  const customer = $("#customer").value.trim() || "-";
+  const notes = $("#notes").value.trim() || "";
 
-  // Данные формы
-  const dateNumber = $("#date").value.trim();
-  const orderNumber = $("#numb").value.trim();
-  const customer = $("#customer").value.trim();
-  const notes = $("#notes").value.trim();
+  const headers = ["#","Система","Цвет","Ширина","Высота","Размеры","Управление","Кол-во"];
+  const colW = [40,100,100,70,70,85,85,60];
 
-  const headers = ["#", "Система", "Цвет", "Ширина", "Высота", "Размеры", "Управление", "Кол-во","Для заметок"];
-  const colW = [40, 100, 100, 70, 70, 85, 85, 60,153]; // сумма = 610 + 153
-
-  const rowH = 28;
-  const headH = 36;
-  const orderInfoH = 60;
-  const notesH = notes ? 70 : 0;
-
-  const availableHeight = pageHeight - margin * 2 - orderInfoH - headH;
+  const availableHeight = pageHeight - margin*2 - orderInfoH - headH;
   const maxRows = Math.floor(availableHeight / rowH);
   const totalPages = Math.ceil(rows.length / maxRows);
 
-  for (let page = 0; page < totalPages; page++) {
+  for (let page=0; page<totalPages; page++) {
     const canvas = document.createElement("canvas");
-    canvas.width = pageWidth * dpi;
-    canvas.height = pageHeight * dpi;
-
+    canvas.width = pageWidth*dpi;
+    canvas.height = pageHeight*dpi;
     const ctx = canvas.getContext("2d");
-    ctx.scale(dpi, dpi);
+    ctx.scale(dpi,dpi);
 
-    // Белый фон
-    ctx.fillStyle = "#ffffff";
-    ctx.fillRect(0, 0, pageWidth, pageHeight);
+    // Фон
+    ctx.fillStyle="#fff";
+    ctx.fillRect(0,0,pageWidth,pageHeight);
 
+    // Заголовок заказа
+    ctx.fillStyle="#000"; ctx.font="bold 16px Arial"; ctx.textBaseline="top";
+    ctx.fillText(`Дата заказа: ${dateNumber}`, margin, margin);
+    ctx.fillText(`Номер заказа: ${orderNumber}`, margin+210, margin);
+    ctx.fillText(`Заказчик: ${customer}`, margin+420, margin);
+
+    let yStart = margin + orderInfoH;
     let xStart = margin;
-    let yStart = margin;
 
-    // --- Блок: Заголовки заказа ---
-    ctx.fillStyle = "#000";
-    ctx.font = "bold 16px Arial";
-    ctx.textBaseline = "top";
-    ctx.fillText(`Дата заказа: ${dateNumber || "-"}`, xStart, yStart);
-    ctx.fillText(`Номер заказа: ${orderNumber || "-"}`, xStart + 210, yStart);
-    ctx.fillText(`Заказчик: ${customer || "-"}`, xStart + 420, yStart);
-
-    // --- Блок: Заголовки таблицы ---
-    yStart += orderInfoH;
-    ctx.fillStyle = "#ddd";
-    ctx.fillRect(xStart, yStart, contentWidth, headH);
-
+    // Шапка таблицы
+    ctx.fillStyle="#ddd"; ctx.fillRect(xStart,yStart,contentWidth,headH);
+    ctx.fillStyle="#000"; ctx.font="bold 13px Arial";
     let colX = xStart;
-    headers.forEach((header, i) => {
-      ctx.fillStyle = "#000";
-      ctx.font = "bold 13px Arial";
-      ctx.fillText(header, colX + 6, yStart + 10);
-      ctx.strokeStyle = "#999";
-      ctx.strokeRect(colX, yStart, colW[i], headH);
-      colX += colW[i];
-    });
+    headers.forEach((h,i)=>{ctx.fillText(h,colX+6,yStart+10); colX+=colW[i];});
+    yStart += headH;
 
-    // --- Строки таблицы ---
-    const startRow = page * maxRows;
-    const endRow = Math.min(startRow + maxRows, rows.length);
-    const currentRows = rows.slice(startRow, endRow);
+    // Строки таблицы
+    const startRow = page*maxRows;
+    const endRow = Math.min(startRow+maxRows, rows.length);
+    const pageRows = rows.slice(startRow,endRow);
 
-    currentRows.forEach((r, i) => {
-      const y = yStart + headH + i * rowH;
-      const row = [startRow + i + 1, r.system, r.color, r.width, r.height, r.basis, r.side, r.qty];
+    pageRows.forEach((r,i)=>{
       let xx = xStart;
-
-      ctx.fillStyle = i % 2 ? "#f8f8f8" : "#ffffff";
-      ctx.fillRect(xStart, y, contentWidth, rowH);
-
-      row.forEach((cell, ci) => {
-        ctx.strokeStyle = "#ccc";
-        ctx.strokeRect(xx, y, colW[ci], rowH);
-
-        ctx.fillStyle = "#000";
-        ctx.font = "13px Arial";
-        ctx.fillText(cell, xx + 6, y + 8);
-        xx += colW[ci];
-      });
+      const rowData = [startRow+i+1,r.system,r.color,r.width,r.height,r.basis,r.side,r.qty];
+      ctx.fillStyle = i%2?"#f8f8f8":"#fff";
+      ctx.fillRect(xStart,yStart,contentWidth,rowH);
+      rowData.forEach((c,j)=>{ctx.fillStyle="#000"; ctx.fillText(c,xx+6,yStart+8); xx+=colW[j];});
+      yStart += rowH;
     });
 
-    // --- Примечание — только на последней странице ---
-    if (page === totalPages - 1 && notes) {
-      const yNotes = yStart + headH + currentRows.length * rowH + 10;
-      ctx.fillStyle = "#444";
-      ctx.font = "italic 13px Arial";
+    // Примечания на последней странице
+    if (page === totalPages-1 && notes) {
+      const yNotes = yStart + 10;
+      ctx.fillStyle="#444"; ctx.font="italic 13px Arial";
       ctx.fillText("Примечание:", xStart, yNotes);
-
-      ctx.fillStyle = "#222";
-      ctx.font = "13px Arial";
-      notes.split('\n').forEach((line, i) => {
-        ctx.fillText(line, xStart, yNotes + 20 + i * 16, contentWidth - 10);
+      ctx.fillStyle="#222"; ctx.font="13px Arial";
+      notes.split('\n').forEach((line,i)=>{
+        ctx.fillText(line,xStart,yNotes+20+i*16,contentWidth-10);
       });
     }
 
-    // --- Номер страницы ---
-    ctx.fillStyle = "#999";
-    ctx.font = "12px Arial";
-    ctx.fillText(`Страница ${page + 1} из ${totalPages}`, pageWidth - margin - 120, pageHeight - margin + 5);
+    // Номер страницы
+    ctx.fillStyle="#999"; ctx.font="12px Arial";
+    ctx.fillText(`Страница ${page+1} из ${totalPages}`, pageWidth-margin-120,pageHeight-margin+5);
 
-    // --- Сохранить как JPEG ---
-const imgData = canvas.toDataURL("image/jpeg", 0.95);
-       Telegram.WebApp.sendData(imgData); // Отправка боту
-};
-if (window.Telegram && Telegram.WebApp) {
+    // Отправка каждой страницы Telegram
+    const imgData = canvas.toDataURL("image/jpeg",0.95);
     Telegram.WebApp.sendData(imgData);
-} else {
-    alert("Ошибка: откройте WebApp через Telegram");
-}
-}
+  }
+
+  alert("Заказ отправлен боту!");
 };
-
-
-
 
 render();
-  
-  //выпадающий список с выбором систем
-  
-const dropdown = document.getElementById('systemDropdown');
-const toggle = dropdown.querySelector('.dropdown-toggle');
-const menu = dropdown.querySelector('.dropdown-menu');
-const labels = dropdown.querySelectorAll('.group-label');
-const options = dropdown.querySelectorAll('.group-options div');
-
-// открыть/закрыть выпадашку
-toggle.onclick = () => {
-  menu.style.display = menu.style.display === 'block' ? 'none' : 'block';
-};
-
-// по клику на группу — открыть/закрыть вложенные опции
-labels.forEach(label => {
-  label.onclick = () => {
-    const options = label.nextElementSibling;
-    const isOpen = options.style.display === 'block';
-    dropdown.querySelectorAll('.group-options').forEach(o => o.style.display = 'none');
-    options.style.display = isOpen ? 'none' : 'block';
-  };
-});
-
-// выбор значения
-options.forEach(opt => {
-  opt.onclick = () => {
-    toggle.textContent = opt.textContent;
-    toggle.dataset.value = opt.dataset.value;
-    menu.style.display = 'none';
-  // Подставляем в форму
-      const systemInput = document.getElementById('systemInput');
-      if (systemInput) systemInput.value = opt.dataset.value;
-  };
-});
-
-// клик вне — закрыть
-document.addEventListener('click', e => {
-  if (!dropdown.contains(e.target)) {
-    menu.style.display = 'none';
-    dropdown.querySelectorAll('.group-options').forEach(o => o.style.display = 'none');
-  }
-}); 
   
 </script>
 </body>
 </html>
+
 
 
