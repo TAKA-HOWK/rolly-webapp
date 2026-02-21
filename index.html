@@ -266,16 +266,46 @@ function render() {
   }
 
   displayRows.forEach((r, i) => {
+    const originalIndex = rows.indexOf(r);
     const tr = document.createElement("tr");
     tr.innerHTML = `<td>${i + 1}</td><td>${r.system}</td><td>${r.color}</td><td class=right>${r.width}</td><td class=right>${r.height}</td>
       <td><span class=tag>${r.basis}</span></td><td>${r.side}</td><td class=right>${r.qty}</td>
-      <td><button class="edit" title="Редактировать" data-i="${i}">✏️</button>
-  <button class="del" title="Удалить" data-i="${i}">✕</button></td>`;
+      <td><button class="edit" title="Редактировать" data-i="${originalIndex}">✏️</button>
+  <button class="del" title="Удалить" data-i="${originalIndex}">✕</button></td>`;
     tb.appendChild(tr);
   });
 
   $$("#tbody .del").forEach(b => b.onclick = () => {
-    const index = b.dataset.i;
+    const index = Number(b.dataset.i);
+    rows.splice(index, 1);
+    render();
+  });
+
+  $$("#tbody .edit").forEach(b => b.onclick = () => {
+    const index = Number(b.dataset.i);
+    const item = rows[index];
+
+    if (!item) return;
+
+    // Заполняем форму значениями из строки
+    $("#systemInput").value = item.system;
+    $(".dropdown-toggle").textContent = item.system;
+
+    $("#color").value = item.color;
+    $("#width").value = item.width;
+    $("#height").value = item.height;
+    $("#qty").value = item.qty;
+
+    // Сброс и выбор плашек
+    $$("#basis .pillr").forEach(el => el.classList.remove("active"));
+    const basisEl = $(`#basis .pillr[data-val="${item.basis}"]`);
+    if (basisEl) basisEl.classList.add("active");
+
+    $$("#sideGroup .pill").forEach(el => el.classList.remove("active"));
+    const sideEl = $(`#sideGroup .pill[data-val="${item.side}"]`);
+    if (sideEl) sideEl.classList.add("active");
+
+    // Удаляем строку
     rows.splice(index, 1);
     render();
   });
@@ -321,7 +351,22 @@ $("#orderInfo").style.display = "block";
   });
      render();
      
- // Очистить всё
+  // Сброс формы после нажатия кнопки добавить
+  //$("#date").value = "";
+  //$("#numb").value = "";
+  $("#width").value = "";
+  $("#height").value = "";
+  $("#qty").value = "";
+  //$("#customer").value = "";
+
+  $$("#basis .pillr").forEach(el => el.classList.remove("active"));
+  const defaultBasis = $$("#basis .pillr")[0];
+  if (defaultBasis) defaultBasis.classList.add("active");
+
+  $$("#sideGroup .pill").forEach(el => el.classList.remove("active"));
+};
+
+// Очистить всё
 $("#clearBtn").onclick = () => {
   const hasTableData = rows.length > 0;
   const hasFormData = $("#date").value || $("#numb").value || $("#customer").value ||
@@ -361,60 +406,6 @@ $("#clearBtn").onclick = () => {
     $("#orderNumberDisplay").textContent = "";
     $("#customerDisplay").textContent = "";
   }
-};
-
-       
-  render();
-     
-       $$("#tbody .edit").forEach(b => b.onclick = () => {
-    const index = b.dataset.i;
-    const item = rows[index];
-
-    // Заполняем форму значениями из строки
-    $("#systemInput").value = item.system;
-    $(".dropdown-toggle").textContent = item.system;
-
-    $("#color").value = item.color;
-    $("#width").value = item.width;
-    $("#height").value = item.height;
-    $("#qty").value = item.qty;
-
-    // Сброс и выбор плашек
-    $$("#basis .pillr").forEach(el => el.classList.remove("active"));
-    const basisEl = $(`#basis .pillr[data-val="${item.basis}"]`);
-    if (basisEl) basisEl.classList.add("active");
-
-    $$("#sideGroup .pill").forEach(el => el.classList.remove("active"));
-    const sideEl = $(`#sideGroup .pill[data-val="${item.side}"]`);
-    if (sideEl) sideEl.classList.add("active");
-
-    // Удаляем строку
-    rows.splice(index, 1);
-    render();
-  });
-
-
-  // Сброс формы после нажатия кнопки добавить
-
-  //$("#date").value = "";
-  //$("#numb").value = "";
-  $("#width").value = "";
-  $("#height").value = "";
-  $("#qty").value = "";
-  //$("#customer").value = "";
-       
-  $$("#basis .pillr").forEach(el => el.classList.remove("active"));
-  const defaultBasis = $$("#basis .pillr")[0];
-  if (defaultBasis) defaultBasis.classList.add("active");
-
-  $$("#sideGroup .pill").forEach(el => el.classList.remove("active"));
-  const defaultSide = Array.from($$("#sideGroup .pill")).find(el => el.dataset.val === "");
-  if (defaultSide) defaultSide.classList.add("active");
-     
-     // Очистка отображения данных заказа после нажатия кнопки добавить
-  //$("#dateNumberDisplay").textContent = "";
-  //$("#orderNumberDisplay").textContent = "";
-     
 };
 
     
