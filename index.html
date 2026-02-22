@@ -4,6 +4,7 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Заказ рольштор</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>
   :root {--bg:#0f1115;--card:#171a21;--muted:#8a94a7;--text:#e7ecf3;--accent:#4aa3ff;--danger:#ff6b6b;}
   body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,Arial,sans-serif; overscroll-behavior-x: none;}
@@ -410,7 +411,37 @@ $("#clearBtn").onclick = () => {
 
     
     
-// --- JPEG экспорт с разбивкой на страницы A4 ---
+function buildOrderPayload() {
+  return {
+    type: "order",
+    date: $("#date").value.trim(),
+    orderNumber: $("#numb").value.trim(),
+    customer: $("#customer").value.trim(),
+    notes: $("#notes").value.trim(),
+    rows,
+  };
+}
+
+function sendOrderToTelegram() {
+  if (!window.Telegram || !window.Telegram.WebApp) {
+    alert("Ошибка: откройте WebApp через Telegram");
+    return false;
+  }
+
+  const payload = JSON.stringify(buildOrderPayload());
+
+  // Telegram WebApp.sendData имеет лимит в 4096 символов.
+  if (payload.length > 4000) {
+    alert("Заказ слишком большой для отправки через Telegram. Уменьшите количество строк или примечание.");
+    return false;
+  }
+
+  Telegram.WebApp.sendData(payload);
+  Telegram.WebApp.close();
+  return true;
+}
+
+// --- JPEG экспорт с разбивкой на страницы A4 + отправка данных в Telegram ---
 $("#saveJpeg").onclick = () => {
   if (!rows.length) {
     alert("Таблица пуста");
@@ -524,14 +555,15 @@ $("#saveJpeg").onclick = () => {
     ctx.font = "12px Arial";
     ctx.fillText(`Страница ${page + 1} из ${totalPages}`, pageWidth - margin - 120, pageHeight - margin + 5);
 
-    // --- Сохранить как JPEG ---
-const imgData = canvas.toDataURL("image/jpeg", 0.95);
-if (window.Telegram && Telegram.WebApp) {
-    Telegram.WebApp.sendData(imgData);
-} else {
-    alert("Ошибка: откройте WebApp через Telegram");
-}
-}
+	// --- Сохранить как JPEG локально ---
+    const imgData = canvas.toDataURL("image/jpeg", 0.95);
+    const link = document.createElement("a");
+    link.href = imgData;
+    link.download = `order_${orderNumber || "no_number"}_p${page + 1}.jpg`;
+    link.click();
+	}
+
+  sendOrderToTelegram();
 };
 
 

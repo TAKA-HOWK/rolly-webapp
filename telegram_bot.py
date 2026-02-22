@@ -1,6 +1,6 @@
 import base64
 import binascii
-import os
+import json
 import tempfile
 from pathlib import Path
 
@@ -8,32 +8,10 @@ from aiogram import Bot, Dispatcher, types
 from aiogram.types import KeyboardButton, ReplyKeyboardMarkup, WebAppInfo
 from aiogram.utils import executor
 
-
-def load_dotenv(path: str = ".env") -> None:
-    env_path = Path(path)
-    if not env_path.exists():
-        return
-
-    for raw_line in env_path.read_text(encoding="utf-8").splitlines():
-        line = raw_line.strip()
-        if not line or line.startswith("#") or "=" not in line:
-            continue
-
-        key, value = line.split("=", 1)
-        key = key.strip()
-        value = value.strip().strip('"').strip("'")
-
-        if key and key not in os.environ:
-            os.environ[key] = value
-
-
-load_dotenv()
-
-TOKEN = os.getenv("TELEGRAM_BOT_TOKEN")
-WEBAPP_URL = os.getenv("WEBAPP_URL", "https://taka-howk.github.io/rolly-webapp/")
-
-if not TOKEN:
-    raise RuntimeError("Set TELEGRAM_BOT_TOKEN in environment or .env file")
+# ВРЕМЕННО: токен захардкожен для локального запуска.
+# Перед публикацией обязательно перенесите токен в переменные окружения.
+TOKEN = "8224277435:AAESw0IeGllW1RfvHaiVjmqQiORJP3Ixh_o"
+WEBAPP_URL = "https://taka-howk.github.io/rolly-webapp/"
 
 bot = Bot(token=TOKEN)
 dp = Dispatcher(bot)
@@ -51,8 +29,32 @@ async def start(message: types.Message) -> None:
 async def handle_webapp(message: types.Message) -> None:
     raw_data = (message.web_app_data.data or "").strip()
 
+    # Новый формат: JSON-данные заказа из Telegram WebApp.sendData
+    if raw_data.startswith("{"):
+        try:
+            payload = json.loads(raw_data)
+        except json.JSONDecodeError:
+            await message.answer("Ошибка: не удалось прочитать данные заказа.")
+            return
+
+        rows = payload.get("rows") or []
+        order_number = payload.get("orderNumber") or "-"
+        customer = payload.get("customer") or "-"
+        date = payload.get("date") or "-"
+
+        text = (
+            "✅ Заказ получен из WebApp\n"
+            f"Дата: {date}\n"
+            f"Номер: {order_number}\n"
+            f"Заказчик: {customer}\n"
+            f"Позиций: {len(rows)}"
+        )
+        await message.answer(text)
+        return
+
+    # Старый формат: base64 JPEG (оставлен для совместимости)
     if not raw_data.startswith("data:image/jpeg;base64,"):
-        await message.answer("Ожидался JPEG из WebApp. Попробуйте снова.")
+        await message.answer("Некорректные данные из WebApp. Откройте форму через кнопку /start и попробуйте снова.")
         return
 
     _, encoded = raw_data.split(",", 1)
