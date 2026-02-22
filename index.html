@@ -4,7 +4,16 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Заказ рольштор</title>
-<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<script>
+  // Грузим Telegram SDK неблокирующе: если не загрузится, страница всё равно откроется.
+  (function loadTelegramSdk() {
+    const s = document.createElement("script");
+    s.src = "https://telegram.org/js/telegram-web-app.js";
+    s.async = true;
+    s.defer = true;
+    document.head.appendChild(s);
+  })();
+</script>
 <style>
   :root {--bg:#0f1115;--card:#171a21;--muted:#8a94a7;--text:#e7ecf3;--accent:#4aa3ff;--danger:#ff6b6b;}
   body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,Arial,sans-serif; overscroll-behavior-x: none;}
@@ -31,7 +40,7 @@
   .right{text-align:right}
   .del{border:none;background:transparent;color:var(--danger);cursor:pointer}
   .dropdown {position: relative;display: inline-block;width: 250px;z-index: 1000;}
-@@ -388,52 +389,82 @@ $("#clearBtn").onclick = () => {
+@@ -388,52 +398,82 @@ $("#clearBtn").onclick = () => {
     $("#color").value = "";
     $("#width").value = "";
     $("#height").value = "";
@@ -69,7 +78,8 @@ function buildOrderPayload() {
 }
 
 function sendOrderToTelegram() {
-  if (!window.Telegram || !window.Telegram.WebApp) {
+  const tg = window.Telegram?.WebApp;
+  if (!tg) {
     alert("Ошибка: откройте WebApp через Telegram");
     return false;
   }
@@ -82,8 +92,7 @@ function sendOrderToTelegram() {
     return false;
   }
 
-  Telegram.WebApp.sendData(payload);
-  Telegram.WebApp.close();
+  tg.sendData(payload);
   return true;
 }
 
@@ -114,7 +123,7 @@ $("#saveJpeg").onclick = () => {
   const rowH = 28;
   const headH = 36;
   const orderInfoH = 60;
-@@ -502,59 +533,60 @@ $("#saveJpeg").onclick = () => {
+@@ -502,87 +542,95 @@ $("#saveJpeg").onclick = () => {
         ctx.font = "13px Arial";
         ctx.fillText(cell, xx + 6, y + 8);
         xx += colW[ci];
@@ -155,10 +164,16 @@ $("#saveJpeg").onclick = () => {
 
 
 render();
+
+if (window.Telegram?.WebApp) {
+  window.Telegram.WebApp.ready();
+  window.Telegram.WebApp.expand();
+}
   
   //выпадающий список с выбором систем
   
 const dropdown = document.getElementById('systemDropdown');
+if (dropdown) {
 const toggle = dropdown.querySelector('.dropdown-toggle');
 const menu = dropdown.querySelector('.dropdown-menu');
 const labels = dropdown.querySelectorAll('.group-label');
@@ -175,87 +190,31 @@ labels.forEach(label => {
     const options = label.nextElementSibling;
     const isOpen = options.style.display === 'block';
     dropdown.querySelectorAll('.group-options').forEach(o => o.style.display = 'none');
-telegram_bot.py
-telegram_bot.py
-+79
--77
+    options.style.display = isOpen ? 'none' : 'block';
+  };
+});
 
-import base64
-import binascii
-import json
-import tempfile
-from pathlib import Path
+// выбор значения
+options.forEach(opt => {
+  opt.onclick = () => {
+    toggle.textContent = opt.textContent;
+    toggle.dataset.value = opt.dataset.value;
+    menu.style.display = 'none';
+  // Подставляем в форму
+      const systemInput = document.getElementById('systemInput');
+      if (systemInput) systemInput.value = opt.dataset.value;
+  };
+});
 
-from aiogram import Bot, Dispatcher, types
-from aiogram.types import KeyboardButton, ReplyKeyboardMarkup, WebAppInfo
-from aiogram.utils import executor
-
-# ВРЕМЕННО: токен захардкожен для локального запуска.
-# Перед публикацией обязательно перенесите токен в переменные окружения.
-TOKEN = "8224277435:AAESw0IeGllW1RfvHaiVjmqQiORJP3Ixh_o"
-WEBAPP_URL = "https://taka-howk.github.io/rolly-webapp/"
-
-bot = Bot(token=TOKEN)
-dp = Dispatcher(bot)
-
-
-@dp.message_handler(commands=["start"])
-async def start(message: types.Message) -> None:
-    keyboard = ReplyKeyboardMarkup(resize_keyboard=True)
-    button = KeyboardButton(text="Открыть заказ", web_app=WebAppInfo(url=WEBAPP_URL))
-    keyboard.add(button)
-    await message.answer("Нажмите кнопку ниже:", reply_markup=keyboard)
-
-
-@dp.message_handler(content_types=types.ContentType.WEB_APP_DATA)
-async def handle_webapp(message: types.Message) -> None:
-    raw_data = (message.web_app_data.data or "").strip()
-
-    # Новый формат: JSON-данные заказа из Telegram WebApp.sendData
-    if raw_data.startswith("{"):
-        try:
-            payload = json.loads(raw_data)
-        except json.JSONDecodeError:
-            await message.answer("Ошибка: не удалось прочитать данные заказа.")
-            return
-
-        rows = payload.get("rows") or []
-        order_number = payload.get("orderNumber") or "-"
-        customer = payload.get("customer") or "-"
-        date = payload.get("date") or "-"
-
-        text = (
-            "✅ Заказ получен из WebApp\n"
-            f"Дата: {date}\n"
-            f"Номер: {order_number}\n"
-            f"Заказчик: {customer}\n"
-            f"Позиций: {len(rows)}"
-        )
-        await message.answer(text)
-        return
-
-    # Старый формат: base64 JPEG (оставлен для совместимости)
-    if not raw_data.startswith("data:image/jpeg;base64,"):
-        await message.answer("Некорректные данные из WebApp. Откройте форму через кнопку /start и попробуйте снова.")
-        return
-
-    _, encoded = raw_data.split(",", 1)
-
-    try:
-        image_bytes = base64.b64decode(encoded, validate=True)
-    except (binascii.Error, ValueError):
-        await message.answer("Некорректные данные изображения. Попробуйте снова.")
-        return
-
-    with tempfile.NamedTemporaryFile(suffix=".jpg", delete=False) as tmp:
-        temp_path = Path(tmp.name)
-        tmp.write(image_bytes)
-
-    try:
-        await message.answer_photo(types.InputFile(temp_path))
-    finally:
-        temp_path.unlink(missing_ok=True)
-
-
-if __name__ == "__main__":
-    executor.start_polling(dp, skip_updates=True)
+// клик вне — закрыть
+document.addEventListener('click', e => {
+  if (!dropdown.contains(e.target)) {
+    menu.style.display = 'none';
+    dropdown.querySelectorAll('.group-options').forEach(o => o.style.display = 'none');
+  }
+}); 
+}
+  
+</script>
+</body>
+</html>
