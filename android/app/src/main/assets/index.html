@@ -455,33 +455,6 @@ async function tryShareFiles(files) {
   }
 }
 
-
-async function blobToBase64(blob) {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      const result = String(reader.result || "");
-      const base64 = result.includes(",") ? result.split(",")[1] : result;
-      resolve(base64);
-    };
-    reader.onerror = reject;
-    reader.readAsDataURL(blob);
-  });
-}
-
-async function trySaveViaAndroidBridge(pageArtifacts) {
-  if (!window.AndroidBridge || typeof window.AndroidBridge.saveJpegBase64 !== "function") {
-    return false;
-  }
-
-  for (const p of pageArtifacts) {
-    const base64 = await blobToBase64(p.blob);
-    window.AndroidBridge.saveJpegBase64(p.filename, base64);
-  }
-
-  return true;
-}
-
 function showInlineExportPanel(pages, files) {
   const old = document.getElementById("exportPanel");
   if (old) old.remove();
@@ -654,17 +627,13 @@ $("#saveJpeg").onclick = async () => {
     pageArtifacts.push({ filename, url, blob });
     files.push(file);
   }
-  const savedInAndroid = await trySaveViaAndroidBridge(pageArtifacts);
-  if (savedInAndroid) {
-    alert("JPEG сохранены в галерею (Pictures/Rolly)");
-  } else {
-    const shared = await tryShareFiles(files);
-    if (!shared) {
-      pageArtifacts.forEach((p) => tryAutoDownloadBlob(p.blob, p.filename));
-    }
-
-    showInlineExportPanel(pageArtifacts, files);
+  const shared = await tryShareFiles(files);
+  if (!shared) {
+    pageArtifacts.forEach((p) => tryAutoDownloadBlob(p.blob, p.filename));
   }
+
+
+  showInlineExportPanel(pageArtifacts, files);
 };
 
 
