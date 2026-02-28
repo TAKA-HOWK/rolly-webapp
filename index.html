@@ -465,7 +465,10 @@ $("#saveJpeg").onclick = () => {
   const pageWidth = 842;
   const pageHeight = 595;
   const margin = 40;
-  const dpi = 2;
+ // Настройки сжатия (можно менять под баланс качества/веса файла)
+  const exportDpi = 1.5;      // чем меньше, тем меньше размер JPEG
+  const exportQuality = 0.72; // диапазон 0..1
+
 
   const contentWidth = pageWidth - margin * 2;
 
@@ -486,15 +489,15 @@ $("#saveJpeg").onclick = () => {
   const availableHeight = pageHeight - margin * 2 - orderInfoH - headH;
   const maxRows = Math.floor(availableHeight / rowH);
   const totalPages = Math.ceil(rows.length / maxRows);
-  const pages = [];
+const pages = [];
 
   for (let page = 0; page < totalPages; page++) {
     const canvas = document.createElement("canvas");
-    canvas.width = pageWidth * dpi;
-    canvas.height = pageHeight * dpi;
+    canvas.width = pageWidth * exportDpi;
+    canvas.height = pageHeight * exportDpi;
 
     const ctx = canvas.getContext("2d");
-    ctx.scale(dpi, dpi);
+    ctx.scale(exportDpi, exportDpi);
 
     // Белый фон
     ctx.fillStyle = "#ffffff";
@@ -570,7 +573,7 @@ $("#saveJpeg").onclick = () => {
     ctx.fillText(`Страница ${page + 1} из ${totalPages}`, pageWidth - margin - 120, pageHeight - margin + 5);
 
     // --- Сохранить как JPEG ---
-    const imageData = canvas.toDataURL("image/jpeg", 0.95);
+    const imageData = canvas.toDataURL("image/jpeg", exportQuality);
     pages.push({
       filename: `rolshtory_page_${page + 1}.jpg`,
       dataUrl: imageData
