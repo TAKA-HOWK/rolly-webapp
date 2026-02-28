@@ -432,7 +432,25 @@ function dataUrlToBlob(dataUrl) {
   return new Blob([bytes], { type: mime });
 }
 
-async function saveBlobAsJpeg(blob, filename) {
+function openImagePreview(dataUrl, filename) {
+  const previewWindow = window.open("", "_blank");
+  if (!previewWindow) {
+    alert("Браузер заблокировал окно предпросмотра. Разрешите pop-up для сохранения JPEG.");
+    return;
+  }
+
+  previewWindow.document.write(`<!doctype html><html lang="ru"><head><meta charset="utf-8"><title>${filename}</title>
+  <style>body{margin:0;background:#111;color:#eee;font-family:Arial,sans-serif;padding:16px}
+  .bar{position:sticky;top:0;background:#111;padding-bottom:12px;margin-bottom:12px}
+  a{display:inline-block;padding:10px 14px;background:#2a7ee8;color:#fff;text-decoration:none;border-radius:8px}
+  img{display:block;max-width:100%;height:auto;margin:0 auto;background:#fff}</style></head>
+  <body><div class="bar"><a href="${dataUrl}" download="${filename}">Скачать JPEG</a>
+  <p>Если файл не скачался автоматически, нажмите кнопку выше или удерживайте изображение и выберите «Сохранить».</p></div>
+  <img src="${dataUrl}" alt="${filename}"></body></html>`);
+  previewWindow.document.close();
+}
+
+async function saveBlobAsJpeg(blob, filename, dataUrl) {
   const file = new File([blob], filename, { type: "image/jpeg" });
 
   // 1) Telegram / мобильные: Share sheet даёт самый стабильный способ сохранить файл.
@@ -455,16 +473,14 @@ async function saveBlobAsJpeg(blob, filename) {
   document.body.appendChild(link);
   link.click();
   link.remove();
-
-  // 3) Если загрузка в WebView блокируется, открываем изображение как страницу.
-  setTimeout(() => {
-    const opened = window.open(url, "_blank");
-    if (!opened) {
-      window.location.href = url;
-    }
-  }, 120);
-
   setTimeout(() => URL.revokeObjectURL(url), 5000);
+
+  // 3) Безопасный fallback: понятный preview вместо чёрного экрана blob://
+  // только для Telegram WebView, где downloads часто блокируются.
+  const isTelegramWebView = Boolean(window.Telegram && window.Telegram.WebApp);
+  if (isTelegramWebView) {
+    setTimeout(() => openImagePreview(dataUrl, filename), 200);
+  }
 }
 
 $("#saveJpeg").onclick = async () => {
@@ -581,11 +597,11 @@ $("#saveJpeg").onclick = async () => {
     ctx.fillText(`Страница ${page + 1} из ${totalPages}`, pageWidth - margin - 120, pageHeight - margin + 5);
 
     // --- Сохранить как JPEG ---
-const imageData = canvas.toDataURL("image/jpeg", 0.95);
+    const imageData = canvas.toDataURL("image/jpeg", 0.95);
     const blob = dataUrlToBlob(imageData);
 
     try {
-      await saveBlobAsJpeg(blob, `rolshtory_page_${page + 1}.jpg`);
+      await saveBlobAsJpeg(blob, `rolshtory_page_${page + 1}.jpg`, imageData);
     } catch (err) {
       // Пользователь может закрыть share-диалог без выбора действия.
       if (err?.name !== "AbortError") {
