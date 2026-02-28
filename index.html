@@ -420,70 +420,42 @@ $("#clearBtn").onclick = () => {
     
     
 // --- JPEG экспорт с разбивкой на страницы A4 ---
-function dataUrlToBlob(dataUrl) {
-  const [meta, base64] = dataUrl.split(",");
-  const mimeMatch = meta.match(/data:(.*?);base64/);
-  const mime = mimeMatch ? mimeMatch[1] : "image/jpeg";
-
-  const byteString = atob(base64);
-  const bytes = new Uint8Array(byteString.length);
-  for (let i = 0; i < byteString.length; i++) bytes[i] = byteString.charCodeAt(i);
-
-  return new Blob([bytes], { type: mime });
-}
-
-function openImagePreview(dataUrl, filename) {
-  const previewWindow = window.open("", "_blank");
-  if (!previewWindow) {
-    alert("Браузер заблокировал окно предпросмотра. Разрешите pop-up для сохранения JPEG.");
+function openExportWindow(pages) {
+  const w = window.open("", "_blank");
+  if (!w) {
+    alert("Браузер заблокировал окно сохранения. Разрешите pop-up и попробуйте снова.");
     return;
   }
 
-  previewWindow.document.write(`<!doctype html><html lang="ru"><head><meta charset="utf-8"><title>${filename}</title>
-  <style>body{margin:0;background:#111;color:#eee;font-family:Arial,sans-serif;padding:16px}
-  .bar{position:sticky;top:0;background:#111;padding-bottom:12px;margin-bottom:12px}
-  a{display:inline-block;padding:10px 14px;background:#2a7ee8;color:#fff;text-decoration:none;border-radius:8px}
-  img{display:block;max-width:100%;height:auto;margin:0 auto;background:#fff}</style></head>
-  <body><div class="bar"><a href="${dataUrl}" download="${filename}">Скачать JPEG</a>
-  <p>Если файл не скачался автоматически, нажмите кнопку выше или удерживайте изображение и выберите «Сохранить».</p></div>
-  <img src="${dataUrl}" alt="${filename}"></body></html>`);
-  previewWindow.document.close();
+  const blocks = pages.map((p, i) => `
+    <section style="margin:0 0 24px">
+      <h3 style="margin:0 0 10px">Страница ${i + 1}</h3>
+      <a href="${p.dataUrl}" download="${p.filename}" style="display:inline-block;padding:10px 14px;background:#2a7ee8;color:#fff;text-decoration:none;border-radius:8px;margin-bottom:10px">Скачать ${p.filename}</a>
+      <img src="${p.dataUrl}" alt="${p.filename}" style="display:block;max-width:100%;height:auto;border:1px solid #ddd;background:#fff" />
+    </section>
+  `).join("");
+
+  w.document.write(`<!doctype html><html lang="ru"><head><meta charset="utf-8"><title>Экспорт JPEG</title></head>
+  <body style="margin:0;background:#111;color:#eee;font-family:Arial,sans-serif;padding:16px">
+  <h2 style="margin-top:0">Экспорт заказа в JPEG</h2>
+  <p>Если автоскачивание не сработало, нажмите кнопку «Скачать» под нужной страницей.</p>
+  ${blocks}
+  </body></html>`);
+  w.document.close();
 }
 
-async function saveBlobAsJpeg(blob, filename, dataUrl) {
-  const file = new File([blob], filename, { type: "image/jpeg" });
-
-  // 1) Telegram / мобильные: Share sheet даёт самый стабильный способ сохранить файл.
-  if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
-    await navigator.share({
-      files: [file],
-      title: filename,
-      text: "Таблица заказа в JPEG"
-    });
-    return;
-  }
-
-  // 2) Обычное скачивание.
-  const url = URL.createObjectURL(blob);
+function tryAutoDownload(dataUrl, filename) {
   const link = document.createElement("a");
-  link.href = url;
+  link.href = dataUrl;
   link.download = filename;
   link.rel = "noopener";
   link.style.display = "none";
   document.body.appendChild(link);
   link.click();
   link.remove();
-  setTimeout(() => URL.revokeObjectURL(url), 5000);
-
-  // 3) Безопасный fallback: понятный preview вместо чёрного экрана blob://
-  // только для Telegram WebView, где downloads часто блокируются.
-  const isTelegramWebView = Boolean(window.Telegram && window.Telegram.WebApp);
-  if (isTelegramWebView) {
-    setTimeout(() => openImagePreview(dataUrl, filename), 200);
-  }
 }
 
-$("#saveJpeg").onclick = async () => {
+$("#saveJpeg").onclick = () => {
   if (!rows.length) {
     alert("Таблица пуста");
     return;
@@ -514,6 +486,7 @@ $("#saveJpeg").onclick = async () => {
   const availableHeight = pageHeight - margin * 2 - orderInfoH - headH;
   const maxRows = Math.floor(availableHeight / rowH);
   const totalPages = Math.ceil(rows.length / maxRows);
+  const pages = [];
 
   for (let page = 0; page < totalPages; page++) {
     const canvas = document.createElement("canvas");
@@ -598,20 +571,15 @@ $("#saveJpeg").onclick = async () => {
 
     // --- Сохранить как JPEG ---
     const imageData = canvas.toDataURL("image/jpeg", 0.95);
-    const blob = dataUrlToBlob(imageData);
-
-    try {
-      await saveBlobAsJpeg(blob, `rolshtory_page_${page + 1}.jpg`, imageData);
-    } catch (err) {
-      // Пользователь может закрыть share-диалог без выбора действия.
-      if (err?.name !== "AbortError") {
-        alert("Не удалось сохранить файл. Попробуйте снова.");
-      }
-      break;
-    }
+    pages.push({
+      filename: `rolshtory_page_${page + 1}.jpg`,
+      dataUrl: imageData
+    });
+  }
 
 
-}
+  pages.forEach((p) => tryAutoDownload(p.dataUrl, p.filename));
+  openExportWindow(pages);
 };
 
 
