@@ -420,42 +420,87 @@ $("#clearBtn").onclick = () => {
     
     
 // --- JPEG экспорт с разбивкой на страницы A4 ---
-function openExportWindow(pages) {
-  const w = window.open("", "_blank");
-  if (!w) {
-    alert("Браузер заблокировал окно сохранения. Разрешите pop-up и попробуйте снова.");
-    return;
-  }
-
-  const blocks = pages.map((p, i) => `
-    <section style="margin:0 0 24px">
-      <h3 style="margin:0 0 10px">Страница ${i + 1}</h3>
-      <a href="${p.dataUrl}" download="${p.filename}" style="display:inline-block;padding:10px 14px;background:#2a7ee8;color:#fff;text-decoration:none;border-radius:8px;margin-bottom:10px">Скачать ${p.filename}</a>
-      <img src="${p.dataUrl}" alt="${p.filename}" style="display:block;max-width:100%;height:auto;border:1px solid #ddd;background:#fff" />
-    </section>
-  `).join("");
-
-  w.document.write(`<!doctype html><html lang="ru"><head><meta charset="utf-8"><title>Экспорт JPEG</title></head>
-  <body style="margin:0;background:#111;color:#eee;font-family:Arial,sans-serif;padding:16px">
-  <h2 style="margin-top:0">Экспорт заказа в JPEG</h2>
-  <p>Если автоскачивание не сработало, нажмите кнопку «Скачать» под нужной страницей.</p>
-  ${blocks}
-  </body></html>`);
-  w.document.close();
+function blobFromCanvas(canvas, quality) {
+  return new Promise((resolve, reject) => {
+    canvas.toBlob((blob) => {
+      if (blob) resolve(blob);
+      else reject(new Error("Не удалось сформировать JPEG"));
+    }, "image/jpeg", quality);
+  });
 }
 
-function tryAutoDownload(dataUrl, filename) {
+function tryAutoDownloadBlob(blob, filename) {
+  const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
-  link.href = dataUrl;
+  link.href = url;
   link.download = filename;
   link.rel = "noopener";
   link.style.display = "none";
   document.body.appendChild(link);
   link.click();
   link.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 8000);
 }
 
-$("#saveJpeg").onclick = () => {
+async function tryShareFiles(files) {
+  if (!navigator.share || !navigator.canShare || !navigator.canShare({ files })) return false;
+  try {
+    await navigator.share({ files, title: "Таблица заказа JPEG" });
+    return true;
+  } catch (err) {
+    if (err?.name !== "AbortError") {
+      console.warn("Share failed", err);
+    }
+    return false;
+  }
+}
+
+function showInlineExportPanel(pages, files) {
+  const old = document.getElementById("exportPanel");
+  if (old) old.remove();
+
+  const panel = document.createElement("div");
+  panel.id = "exportPanel";
+  panel.className = "card";
+  panel.style.marginTop = "12px";
+
+  const shareBtn = navigator.share
+    ? `<button class="btn secondary" id="shareExportFiles" style="margin-right:8px">Поделиться JPEG</button>`
+    : "";
+
+  panel.innerHTML = `
+    <h3 style="margin:0 0 8px">Экспорт JPEG</h3>
+    <p style="margin:0 0 10px;color:#8a94a7">Если загрузка не началась автоматически, нажмите «Скачать» у нужной страницы.</p>
+    <div style="margin-bottom:10px">${shareBtn}<button class="btn secondary" id="closeExportPanel">Скрыть</button></div>
+    <div id="exportPages"></div>
+  `;
+
+  const pagesWrap = panel.querySelector("#exportPages");
+  pages.forEach((p, i) => {
+    const item = document.createElement("div");
+    item.style.marginBottom = "14px";
+    item.innerHTML = `
+      <div style="margin-bottom:6px"><strong>Страница ${i + 1}</strong></div>
+      <a class="btn primary" style="display:inline-block;text-decoration:none;margin-bottom:8px" href="${p.url}" download="${p.filename}">Скачать ${p.filename}</a>
+      <img src="${p.url}" alt="${p.filename}" style="display:block;max-width:100%;height:auto;border:1px solid #2a2f3d;background:#fff" />
+    `;
+    pagesWrap.appendChild(item);
+  });
+
+  panel.querySelector("#closeExportPanel").onclick = () => panel.remove();
+
+  const share = panel.querySelector("#shareExportFiles");
+  if (share) {
+    share.onclick = async () => {
+      const ok = await tryShareFiles(files);
+      if (!ok) alert("Не удалось открыть меню «Поделиться». Попробуйте кнопку «Скачать».");
+    };
+  }
+
+  document.querySelector(".wrap").appendChild(panel);
+}
+
+$("#saveJpeg").onclick = async () => {
   if (!rows.length) {
     alert("Таблица пуста");
     return;
@@ -465,10 +510,9 @@ $("#saveJpeg").onclick = () => {
   const pageWidth = 842;
   const pageHeight = 595;
   const margin = 40;
- // Настройки сжатия (можно менять под баланс качества/веса файла)
+// Настройки сжатия (можно менять под баланс качества/веса файла)
   const exportDpi = 1.5;      // чем меньше, тем меньше размер JPEG
   const exportQuality = 0.72; // диапазон 0..1
-
 
   const contentWidth = pageWidth - margin * 2;
 
@@ -478,18 +522,19 @@ $("#saveJpeg").onclick = () => {
   const customer = $("#customer").value.trim();
   const notes = $("#notes").value.trim();
 
-  const headers = ["#", "Система", "Цвет", "Ширина", "Высота", "Размеры", "Управление", "Кол-во","Для заметок"];
-  const colW = [40, 100, 100, 70, 70, 85, 85, 60,153]; // сумма = 610 + 153
+  const headers = ["#", "Система", "Цвет", "Ширина", "Высота", "Размеры", "Управление", "Кол-во", "Для заметок"];
+  const colW = [40, 100, 100, 70, 70, 85, 85, 60, 153];
 
   const rowH = 28;
   const headH = 36;
   const orderInfoH = 60;
-  const notesH = notes ? 70 : 0;
 
   const availableHeight = pageHeight - margin * 2 - orderInfoH - headH;
   const maxRows = Math.floor(availableHeight / rowH);
   const totalPages = Math.ceil(rows.length / maxRows);
-const pages = [];
+
+  const pageArtifacts = [];
+  const files = [];
 
   for (let page = 0; page < totalPages; page++) {
     const canvas = document.createElement("canvas");
@@ -545,7 +590,6 @@ const pages = [];
       row.forEach((cell, ci) => {
         ctx.strokeStyle = "#ccc";
         ctx.strokeRect(xx, y, colW[ci], rowH);
-
         ctx.fillStyle = "#000";
         ctx.font = "13px Arial";
         ctx.fillText(cell, xx + 6, y + 8);
@@ -573,16 +617,23 @@ const pages = [];
     ctx.fillText(`Страница ${page + 1} из ${totalPages}`, pageWidth - margin - 120, pageHeight - margin + 5);
 
     // --- Сохранить как JPEG ---
-    const imageData = canvas.toDataURL("image/jpeg", exportQuality);
-    pages.push({
-      filename: `rolshtory_page_${page + 1}.jpg`,
-      dataUrl: imageData
-    });
+    const blob = await blobFromCanvas(canvas, exportQuality);
+    const filename = `rolshtory_page_${page + 1}.jpg`;
+    const file = new File([blob], filename, { type: "image/jpeg" });
+    const url = URL.createObjectURL(blob);
+
+
+// --- Сохранить как JPEG через Blob ---
+    pageArtifacts.push({ filename, url, blob });
+    files.push(file);
+  }
+  const shared = await tryShareFiles(files);
+  if (!shared) {
+    pageArtifacts.forEach((p) => tryAutoDownloadBlob(p.blob, p.filename));
   }
 
 
-  pages.forEach((p) => tryAutoDownload(p.dataUrl, p.filename));
-  openExportWindow(pages);
+  showInlineExportPanel(pageArtifacts, files);
 };
 
 
