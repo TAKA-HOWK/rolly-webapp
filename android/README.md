@@ -1,45 +1,28 @@
 # Android APK build
 
-Этот проект упаковывает текущий сайт (`index.html`) в Android-приложение (`WebView`) и собирает `.apk`.
+Этот проект оборачивает текущий `index.html` в нативное Android-приложение (`WebView`).
 
-## Быстрый старт (рекомендуется)
+## Требования
 
-Из корня репозитория:
+- Android SDK (platform 35, build-tools)
+- Java 17+
+- Gradle 8+
 
-```bash
-./scripts/build-android-apk.sh
-```
-
-Скрипт автоматически:
-1. Копирует актуальный `index.html` в `android/app/src/main/assets/index.html`
-2. Запускает `gradle assembleDebug`
-3. Показывает путь к готовому APK
-
-## Ручная сборка
+## Сборка debug APK
 
 ```bash
-cp index.html android/app/src/main/assets/index.html
 cd android
 gradle assembleDebug
 ```
 
 Готовый файл:
 
-`android/app/build/outputs/apk/debug/app-debug.apk`
+`app/build/outputs/apk/debug/app-debug.apk`
 
-## Требования
+## Если меняете сайт
 
-- Java 17+
-- Gradle 8+
-- Android SDK (platform + build-tools, совместимые с настройками в `android/app/build.gradle`)
-
-## Если сборка падает на скачивании зависимостей
-
-Android Gradle Plugin тянется из Google Maven (`https://dl.google.com/dl/android/maven2/`).
-Если сеть/прокси блокируют этот адрес, сборка не стартует.
-
-Проверьте доступ:
+После правок в корневом `index.html` обновите копию для Android:
 
 ```bash
-curl -I https://dl.google.com/dl/android/maven2/
+cp ../index.html app/src/main/assets/index.html
 ```

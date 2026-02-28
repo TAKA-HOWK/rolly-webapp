@@ -455,6 +455,16 @@ async function tryShareFiles(files) {
   }
 }
 
+function openImageFallback(dataUrl) {
+  const w = window.open("", "_blank");
+  if (!w) {
+    alert("Браузер заблокировал открытие изображения. Попробуйте удерживать картинку в блоке экспорта и выбрать «Сохранить».");
+    return;
+  }
+  w.document.write(`<img src="${dataUrl}" style="max-width:100%;height:auto;display:block;margin:0 auto" />`);
+  w.document.close();
+}
+
 function showInlineExportPanel(pages, files) {
   const old = document.getElementById("exportPanel");
   if (old) old.remove();
@@ -481,10 +491,28 @@ function showInlineExportPanel(pages, files) {
     item.style.marginBottom = "14px";
     item.innerHTML = `
       <div style="margin-bottom:6px"><strong>Страница ${i + 1}</strong></div>
-      <a class="btn primary" style="display:inline-block;text-decoration:none;margin-bottom:8px" href="${p.url}" download="${p.filename}">Скачать ${p.filename}</a>
-      <img src="${p.url}" alt="${p.filename}" style="display:block;max-width:100%;height:auto;border:1px solid #2a2f3d;background:#fff" />
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px">
+        <button class="btn primary downloadPageBtn" data-index="${i}">Скачать ${p.filename}</button>
+        <button class="btn secondary openPageBtn" data-index="${i}">Открыть изображение</button>
+      </div>
+      <img src="${p.dataUrl}" alt="${p.filename}" style="display:block;max-width:100%;height:auto;border:1px solid #2a2f3d;background:#fff" />
     `;
     pagesWrap.appendChild(item);
+  });
+
+  panel.querySelectorAll('.downloadPageBtn').forEach(btn => {
+    btn.onclick = () => {
+      const idx = Number(btn.dataset.index);
+      const page = pages[idx];
+      tryAutoDownloadBlob(page.blob, page.filename);
+    };
+  });
+
+  panel.querySelectorAll('.openPageBtn').forEach(btn => {
+    btn.onclick = () => {
+      const idx = Number(btn.dataset.index);
+      openImageFallback(pages[idx].dataUrl);
+    };
   });
 
   panel.querySelector("#closeExportPanel").onclick = () => panel.remove();
@@ -500,7 +528,9 @@ function showInlineExportPanel(pages, files) {
   document.querySelector(".wrap").appendChild(panel);
 }
 
+
 $("#saveJpeg").onclick = async () => {
+
   if (!rows.length) {
     alert("Таблица пуста");
     return;
@@ -510,13 +540,13 @@ $("#saveJpeg").onclick = async () => {
   const pageWidth = 842;
   const pageHeight = 595;
   const margin = 40;
-// Настройки сжатия (можно менять под баланс качества/веса файла)
+
+  // Настройки сжатия (можно менять под баланс качества/веса файла)
   const exportDpi = 1.5;      // чем меньше, тем меньше размер JPEG
   const exportQuality = 0.72; // диапазон 0..1
 
   const contentWidth = pageWidth - margin * 2;
 
-  // Данные формы
   const dateNumber = $("#date").value.trim();
   const orderNumber = $("#numb").value.trim();
   const customer = $("#customer").value.trim();
@@ -544,14 +574,12 @@ $("#saveJpeg").onclick = async () => {
     const ctx = canvas.getContext("2d");
     ctx.scale(exportDpi, exportDpi);
 
-    // Белый фон
     ctx.fillStyle = "#ffffff";
     ctx.fillRect(0, 0, pageWidth, pageHeight);
 
     let xStart = margin;
     let yStart = margin;
 
-    // --- Блок: Заголовки заказа ---
     ctx.fillStyle = "#000";
     ctx.font = "bold 16px Arial";
     ctx.textBaseline = "top";
@@ -559,7 +587,6 @@ $("#saveJpeg").onclick = async () => {
     ctx.fillText(`Номер заказа: ${orderNumber || "-"}`, xStart + 210, yStart);
     ctx.fillText(`Заказчик: ${customer || "-"}`, xStart + 420, yStart);
 
-    // --- Блок: Заголовки таблицы ---
     yStart += orderInfoH;
     ctx.fillStyle = "#ddd";
     ctx.fillRect(xStart, yStart, contentWidth, headH);
@@ -574,7 +601,6 @@ $("#saveJpeg").onclick = async () => {
       colX += colW[i];
     });
 
-    // --- Строки таблицы ---
     const startRow = page * maxRows;
     const endRow = Math.min(startRow + maxRows, rows.length);
     const currentRows = rows.slice(startRow, endRow);
@@ -597,7 +623,6 @@ $("#saveJpeg").onclick = async () => {
       });
     });
 
-    // --- Примечание — только на последней странице ---
     if (page === totalPages - 1 && notes) {
       const yNotes = yStart + headH + currentRows.length * rowH + 10;
       ctx.fillStyle = "#444";
@@ -611,20 +636,17 @@ $("#saveJpeg").onclick = async () => {
       });
     }
 
-    // --- Номер страницы ---
     ctx.fillStyle = "#999";
     ctx.font = "12px Arial";
     ctx.fillText(`Страница ${page + 1} из ${totalPages}`, pageWidth - margin - 120, pageHeight - margin + 5);
 
-    // --- Сохранить как JPEG ---
     const blob = await blobFromCanvas(canvas, exportQuality);
     const filename = `rolshtory_page_${page + 1}.jpg`;
     const file = new File([blob], filename, { type: "image/jpeg" });
-    const url = URL.createObjectURL(blob);
+    const dataUrl = canvas.toDataURL("image/jpeg", exportQuality);
 
 
-// --- Сохранить как JPEG через Blob ---
-    pageArtifacts.push({ filename, url, blob });
+    pageArtifacts.push({ filename, blob, dataUrl });
     files.push(file);
   }
   const shared = await tryShareFiles(files);
@@ -633,7 +655,7 @@ $("#saveJpeg").onclick = async () => {
   }
 
 
-  showInlineExportPanel(pageArtifacts, files);
+ showInlineExportPanel(pageArtifacts, files);
 };
 
 
