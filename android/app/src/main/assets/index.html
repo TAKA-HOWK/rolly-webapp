@@ -455,53 +455,6 @@ async function tryShareFiles(files) {
   }
 }
 
-
-async function blobToBase64(blob) {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      const result = String(reader.result || "");
-      const base64 = result.includes(",") ? result.split(",")[1] : result;
-      resolve(base64);
-    };
-    reader.onerror = reject;
-    reader.readAsDataURL(blob);
-  });
-}
-
-async function trySaveViaAndroidBridge(pageArtifacts) {
-  if (!window.AndroidBridge) return false;
-
-  const hasChunkApi =
-    typeof window.AndroidBridge.beginJpegSave === "function" &&
-    typeof window.AndroidBridge.appendJpegChunk === "function" &&
-    typeof window.AndroidBridge.finishJpegSave === "function";
-
-  for (const p of pageArtifacts) {
-    const base64 = await blobToBase64(p.blob);
-
-    if (hasChunkApi) {
-      window.AndroidBridge.beginJpegSave(p.filename);
-      const chunkSize = 100000;
-      for (let i = 0; i < base64.length; i += chunkSize) {
-        window.AndroidBridge.appendJpegChunk(base64.slice(i, i + chunkSize));
-      }
-      const ok = window.AndroidBridge.finishJpegSave();
-      if (!ok) return false;
-      continue;
-    }
-
-    if (typeof window.AndroidBridge.saveJpegBase64 === "function") {
-      window.AndroidBridge.saveJpegBase64(p.filename, base64);
-      continue;
-    }
-
-    return false;
-  }
-
-  return true;
-}
-
 function showInlineExportPanel(pages, files) {
   const old = document.getElementById("exportPanel");
   if (old) old.remove();
@@ -674,17 +627,13 @@ $("#saveJpeg").onclick = async () => {
     pageArtifacts.push({ filename, url, blob });
     files.push(file);
   }
-  const savedInAndroid = await trySaveViaAndroidBridge(pageArtifacts);
-  if (savedInAndroid) {
-    alert("JPEG сохранены в галерею (Pictures/Rolly)");
-  } else {
-    const shared = await tryShareFiles(files);
-    if (!shared) {
-      pageArtifacts.forEach((p) => tryAutoDownloadBlob(p.blob, p.filename));
-    }
-
-    showInlineExportPanel(pageArtifacts, files);
+  const shared = await tryShareFiles(files);
+  if (!shared) {
+    pageArtifacts.forEach((p) => tryAutoDownloadBlob(p.blob, p.filename));
   }
+
+
+  showInlineExportPanel(pageArtifacts, files);
 };
 
 
