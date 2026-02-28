@@ -420,6 +420,33 @@ $("#clearBtn").onclick = () => {
     
     
 // --- JPEG экспорт с разбивкой на страницы A4 ---
+async function saveBlobAsJpeg(blob, filename) {
+  const file = new File([blob], filename, { type: "image/jpeg" });
+
+  // Для Telegram WebView и мобильных браузеров: сначала вызываем системный Share,
+  // чтобы пользователь мог сохранить изображение в галерею/файлы.
+  if (navigator.share && navigator.canShare?.({ files: [file] })) {
+    await navigator.share({
+      files: [file],
+      title: filename,
+      text: "Таблица заказа в JPEG"
+    });
+    return;
+  }
+
+  // Классический download для обычных браузеров.
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  link.style.display = "none";
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
 $("#saveJpeg").onclick = () => {
   if (!rows.length) {
     alert("Таблица пуста");
@@ -533,22 +560,22 @@ $("#saveJpeg").onclick = () => {
     ctx.font = "12px Arial";
     ctx.fillText(`Страница ${page + 1} из ${totalPages}`, pageWidth - margin - 120, pageHeight - margin + 5);
 
-    // --- Сохранить как JPEG ---
-const imgData = canvas.toDataURL("image/jpeg", 0.95);
+// --- Сохранить как JPEG ---
+    canvas.toBlob(async (blob) => {
+      if (!blob) {
+        alert("Не удалось сформировать JPEG");
+        return;
+      }
 
-
-// --- Сохранить как JPEG через Blob ---
-const byteString = atob(imgData.split(',')[1]);
-const ab = new ArrayBuffer(byteString.length);
-const ia = new Uint8Array(ab);
-for (let i = 0; i < byteString.length; i++) {
-  ia[i] = byteString.charCodeAt(i);
-}
-const blob = new Blob([ab], {type: 'image/jpeg'});
-const link = document.createElement('a');
-link.href = URL.createObjectURL(blob);
-link.download = `rolshtory_page_${page + 1}.jpg`;
-link.click();
+      try {
+        await saveBlobAsJpeg(blob, `rolshtory_page_${page + 1}.jpg`);
+      } catch (err) {
+        // Пользователь может закрыть share-диалог без выбора действия.
+        if (err?.name !== "AbortError") {
+          alert("Не удалось сохранить файл. Попробуйте снова.");
+        }
+      }
+    }, "image/jpeg", 0.95);
 
 
 }
