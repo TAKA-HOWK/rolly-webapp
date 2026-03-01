@@ -455,6 +455,26 @@ async function tryShareFiles(files) {
   }
 }
 
+async function tryAndroidSaveImage(dataUrl, filename) {
+  if (!window.AndroidBridge || typeof window.AndroidBridge.saveImage !== "function") return false;
+  try {
+    return !!window.AndroidBridge.saveImage(dataUrl, filename);
+  } catch (err) {
+    console.warn("Android save failed", err);
+    return false;
+  }
+}
+
+function openImageFallback(dataUrl) {
+  const w = window.open("", "_blank");
+  if (!w) {
+    alert("Браузер заблокировал открытие изображения. Попробуйте удерживать картинку в блоке экспорта и выбрать «Сохранить».");
+    return;
+  }
+  w.document.write(`<img src="${dataUrl}" style="max-width:100%;height:auto;display:block;margin:0 auto" />`);
+  w.document.close();
+}  
+  
 function showInlineExportPanel(pages, files) {
   const old = document.getElementById("exportPanel");
   if (old) old.remove();
@@ -481,12 +501,168 @@ function showInlineExportPanel(pages, files) {
     item.style.marginBottom = "14px";
     item.innerHTML = `
       <div style="margin-bottom:6px"><strong>Страница ${i + 1}</strong></div>
-      <a class="btn primary" style="display:inline-block;text-decoration:none;margin-bottom:8px" href="${p.url}" download="${p.filename}">Скачать ${p.filename}</a>
-      <img src="${p.url}" alt="${p.filename}" style="display:block;max-width:100%;height:auto;border:1px solid #2a2f3d;background:#fff" />
+      
+<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px">
+        <button class="btn primary downloadPageBtn" data-index="${i}">Скачать ${p.filename}</button>
+        <button class="btn secondary openPageBtn" data-index="${i}">Открыть изображение</button>
+      </div>
+      <img src="${p.dataUrl}" alt="${p.filename}" style="display:block;max-width:100%;height:auto;border:1px solid #2a2f3d;background:#fff" />
     `;
     pagesWrap.appendChild(item);
   });
 
+@@ -433,229 +433,272 @@ function tryAutoDownloadBlob(blob, filename) {
+  const url = URL.createObjectURL(blob);
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  const link = document.createElement("a");
+  link.href = url;
+  link.href = url;
+  link.download = filename;
+  link.download = filename;
+  link.rel = "noopener";
+  link.rel = "noopener";
+  link.style.display = "none";
+  link.style.display = "none";
+  document.body.appendChild(link);
+  document.body.appendChild(link);
+  link.click();
+  link.click();
+  link.remove();
+  link.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 8000);
+  setTimeout(() => URL.revokeObjectURL(url), 8000);
+}
+}
+
+
+async function tryShareFiles(files) {
+async function tryShareFiles(files) {
+  if (!navigator.share || !navigator.canShare || !navigator.canShare({ files })) return false;
+  if (!navigator.share || !navigator.canShare || !navigator.canShare({ files })) return false;
+  try {
+  try {
+    await navigator.share({ files, title: "Таблица заказа JPEG" });
+    await navigator.share({ files, title: "Таблица заказа JPEG" });
+    return true;
+    return true;
+  } catch (err) {
+  } catch (err) {
+    if (err?.name !== "AbortError") {
+    if (err?.name !== "AbortError") {
+      console.warn("Share failed", err);
+      console.warn("Share failed", err);
+    }
+    }
+    return false;
+    return false;
+  }
+  }
+}
+}
+
+
+async function tryAndroidSaveImage(dataUrl, filename) {
+  if (!window.AndroidBridge || typeof window.AndroidBridge.saveImage !== "function") return false;
+  try {
+    return !!window.AndroidBridge.saveImage(dataUrl, filename);
+  } catch (err) {
+    console.warn("Android save failed", err);
+    return false;
+  }
+}
+
+function openImageFallback(dataUrl) {
+  const w = window.open("", "_blank");
+  if (!w) {
+    alert("Браузер заблокировал открытие изображения. Попробуйте удерживать картинку в блоке экспорта и выбрать «Сохранить».");
+    return;
+  }
+  w.document.write(`<img src="${dataUrl}" style="max-width:100%;height:auto;display:block;margin:0 auto" />`);
+  w.document.close();
+}
+
+function showInlineExportPanel(pages, files) {
+function showInlineExportPanel(pages, files) {
+  const old = document.getElementById("exportPanel");
+  const old = document.getElementById("exportPanel");
+  if (old) old.remove();
+  if (old) old.remove();
+
+
+  const panel = document.createElement("div");
+  const panel = document.createElement("div");
+  panel.id = "exportPanel";
+  panel.id = "exportPanel";
+  panel.className = "card";
+  panel.className = "card";
+  panel.style.marginTop = "12px";
+  panel.style.marginTop = "12px";
+
+
+  const shareBtn = navigator.share
+  const shareBtn = navigator.share
+    ? `<button class="btn secondary" id="shareExportFiles" style="margin-right:8px">Поделиться JPEG</button>`
+    ? `<button class="btn secondary" id="shareExportFiles" style="margin-right:8px">Поделиться JPEG</button>`
+    : "";
+    : "";
+
+
+  panel.innerHTML = `
+  panel.innerHTML = `
+    <h3 style="margin:0 0 8px">Экспорт JPEG</h3>
+    <h3 style="margin:0 0 8px">Экспорт JPEG</h3>
+    <p style="margin:0 0 10px;color:#8a94a7">Если загрузка не началась автоматически, нажмите «Скачать» у нужной страницы.</p>
+    <p style="margin:0 0 10px;color:#8a94a7">Если загрузка не началась автоматически, нажмите «Скачать» у нужной страницы.</p>
+    <div style="margin-bottom:10px">${shareBtn}<button class="btn secondary" id="closeExportPanel">Скрыть</button></div>
+    <div style="margin-bottom:10px">${shareBtn}<button class="btn secondary" id="closeExportPanel">Скрыть</button></div>
+    <div id="exportPages"></div>
+    <div id="exportPages"></div>
+  `;
+  `;
+
+
+  const pagesWrap = panel.querySelector("#exportPages");
+  const pagesWrap = panel.querySelector("#exportPages");
+  pages.forEach((p, i) => {
+  pages.forEach((p, i) => {
+    const item = document.createElement("div");
+    const item = document.createElement("div");
+    item.style.marginBottom = "14px";
+    item.style.marginBottom = "14px";
+    item.innerHTML = `
+    item.innerHTML = `
+      <div style="margin-bottom:6px"><strong>Страница ${i + 1}</strong></div>
+      <div style="margin-bottom:6px"><strong>Страница ${i + 1}</strong></div>
+      <a class="btn primary" style="display:inline-block;text-decoration:none;margin-bottom:8px" href="${p.url}" download="${p.filename}">Скачать ${p.filename}</a>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px">
+      <img src="${p.url}" alt="${p.filename}" style="display:block;max-width:100%;height:auto;border:1px solid #2a2f3d;background:#fff" />
+        <button class="btn primary downloadPageBtn" data-index="${i}">Скачать ${p.filename}</button>
+        <button class="btn secondary openPageBtn" data-index="${i}">Открыть изображение</button>
+      </div>
+      <img src="${p.dataUrl}" alt="${p.filename}" style="display:block;max-width:100%;height:auto;border:1px solid #2a2f3d;background:#fff" />
+    `;
+    `;
+    pagesWrap.appendChild(item);
+    pagesWrap.appendChild(item);
+  });
+  });
+
+
+  panel.querySelectorAll('.downloadPageBtn').forEach(btn => {
+    btn.onclick = () => {
+      const idx = Number(btn.dataset.index);
+      const page = pages[idx];
+      tryAutoDownloadBlob(page.blob, page.filename);
+    };
+  });
+
+  panel.querySelectorAll('.openPageBtn').forEach(btn => {
+    btn.onclick = () => {
+      const idx = Number(btn.dataset.index);
+      openImageFallback(pages[idx].dataUrl);
+    };
+  });
   panel.querySelector("#closeExportPanel").onclick = () => panel.remove();
 
   const share = panel.querySelector("#shareExportFiles");
@@ -501,6 +677,7 @@ function showInlineExportPanel(pages, files) {
 }
 
 $("#saveJpeg").onclick = async () => {
+  
   if (!rows.length) {
     alert("Таблица пуста");
     return;
@@ -510,6 +687,7 @@ $("#saveJpeg").onclick = async () => {
   const pageWidth = 842;
   const pageHeight = 595;
   const margin = 40;
+  
 // Настройки сжатия (можно менять под баланс качества/веса файла)
   const exportDpi = 1.5;      // чем меньше, тем меньше размер JPEG
   const exportQuality = 0.72; // диапазон 0..1
@@ -620,20 +798,31 @@ $("#saveJpeg").onclick = async () => {
     const blob = await blobFromCanvas(canvas, exportQuality);
     const filename = `rolshtory_page_${page + 1}.jpg`;
     const file = new File([blob], filename, { type: "image/jpeg" });
-    const url = URL.createObjectURL(blob);
+    const dataUrl = canvas.toDataURL("image/jpeg", exportQuality);
 
 
-// --- Сохранить как JPEG через Blob ---
-    pageArtifacts.push({ filename, url, blob });
+pageArtifacts.push({ filename, blob, dataUrl });
+    
     files.push(file);
   }
   const shared = await tryShareFiles(files);
   if (!shared) {
-    pageArtifacts.forEach((p) => tryAutoDownloadBlob(p.blob, p.filename));
+   let savedToAndroid = false;
+    if (window.AndroidBridge && typeof window.AndroidBridge.saveImage === "function") {
+      const results = await Promise.all(pageArtifacts.map((p) => tryAndroidSaveImage(p.dataUrl, p.filename)));
+      savedToAndroid = results.every(Boolean);
+      if (!savedToAndroid) {
+        alert("Не удалось сохранить часть файлов в память телефона. Запускаю браузерное скачивание.");
+      }
+    }
+
+    if (!savedToAndroid) {
+      pageArtifacts.forEach((p) => tryAutoDownloadBlob(p.blob, p.filename));
+    }
   }
 
 
-  showInlineExportPanel(pageArtifacts, files);
+showInlineExportPanel(pageArtifacts, files);
 };
 
 
