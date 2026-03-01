@@ -45,3 +45,7 @@ gradle assembleDebug
 ```bash
 cp ../index.html app/src/main/assets/index.html
 ```
+
+## Сохранение JPEG на Android
+
+В APK сохранение JPEG из кнопки «Сохранить JPEG» выполняется нативно через Android bridge, файлы сохраняются в `Pictures/Rolly` (на Android 10+ через MediaStore).
