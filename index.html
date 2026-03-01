@@ -454,6 +454,15 @@ async function tryShareFiles(files) {
     return false;
   }
 }
+async function tryAndroidSaveImage(dataUrl, filename) {
+  if (!window.AndroidBridge || typeof window.AndroidBridge.saveImage !== "function") return false;
+  try {
+    return !!window.AndroidBridge.saveImage(dataUrl, filename);
+  } catch (err) {
+    console.warn("Android save failed", err);
+    return false;
+  }
+}
 
 function openImageFallback(dataUrl) {
   const w = window.open("", "_blank");
@@ -651,7 +660,18 @@ $("#saveJpeg").onclick = async () => {
   }
   const shared = await tryShareFiles(files);
   if (!shared) {
-    pageArtifacts.forEach((p) => tryAutoDownloadBlob(p.blob, p.filename));
+  let savedToAndroid = false;
+    if (window.AndroidBridge && typeof window.AndroidBridge.saveImage === "function") {
+      const results = await Promise.all(pageArtifacts.map((p) => tryAndroidSaveImage(p.dataUrl, p.filename)));
+      savedToAndroid = results.every(Boolean);
+      if (!savedToAndroid) {
+        alert("Не удалось сохранить часть файлов в память телефона. Запускаю браузерное скачивание.");
+      }
+    }
+
+    if (!savedToAndroid) {
+      pageArtifacts.forEach((p) => tryAutoDownloadBlob(p.blob, p.filename));
+    }
   }
 
 
