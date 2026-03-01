@@ -16,14 +16,46 @@ if ! command -v java >/dev/null 2>&1; then
   exit 1
 fi
 
-SDK_DIR="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-}}"
-if [[ -z "$SDK_DIR" && -f "$LOCAL_PROPERTIES" ]]; then
-  SDK_DIR="$(sed -n 's/^sdk\.dir=//p' "$LOCAL_PROPERTIES" | head -n 1)"
-fi
+unescape_gradle_path() {
+  local raw="$1"
+  # Gradle local.properties can contain escaped separators (\\), colons (\:) and spaces (\ )
+  raw="${raw//\\:/:}"
+  raw="${raw//\\ / }"
+  raw="${raw//\\\\/\\}"
+  printf '%s' "$raw"
+}
+
+get_sdk_from_local_properties() {
+  if [[ ! -f "$LOCAL_PROPERTIES" ]]; then
+    return 0
+  fi
+
+  local raw
+  raw="$(sed -n 's/^sdk\.dir=//p' "$LOCAL_PROPERTIES" | head -n 1)"
+  if [[ -z "$raw" ]]; then
+    return 0
+  fi
+
+  unescape_gradle_path "$raw"
+}
+
+find_sdk_dir() {
+  local candidate
+
+  for candidate in "${ANDROID_HOME:-}" "${ANDROID_SDK_ROOT:-}" "$(get_sdk_from_local_properties)" \
+    "$HOME/Android/Sdk" "$HOME/Library/Android/sdk" "/opt/android-sdk" "/usr/lib/android-sdk"; do
+    if [[ -n "$candidate" && -d "$candidate" ]]; then
+      printf '%s' "$candidate"
+      return 0
+    fi
+  done
+}
+
+SDK_DIR="$(find_sdk_dir)"
 
 if [[ -z "$SDK_DIR" || ! -d "$SDK_DIR" ]]; then
   echo "Ошибка: Android SDK не найден." >&2
-  echo "Задайте ANDROID_HOME (или ANDROID_SDK_ROOT) и повторите сборку." >&2
+  echo "Проверьте переменные ANDROID_HOME / ANDROID_SDK_ROOT или sdk.dir в android/local.properties." >&2
   echo "Пример: export ANDROID_HOME=\"$HOME/Android/Sdk\"" >&2
   exit 1
 fi

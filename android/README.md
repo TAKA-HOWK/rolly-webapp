@@ -11,7 +11,7 @@
 ## Подготовка окружения
 
 1. Установите Android SDK.
-2. Экспортируйте путь к SDK:
+2. Скрипт пытается найти SDK автоматически (в `ANDROID_HOME`, `ANDROID_SDK_ROOT`, `android/local.properties` и стандартных путях), но надёжнее явно экспортировать путь:
 
 ```bash
 export ANDROID_HOME="$HOME/Android/Sdk"
