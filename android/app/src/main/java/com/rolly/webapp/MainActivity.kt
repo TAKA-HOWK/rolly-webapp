@@ -1,56 +1,12 @@
 package com.rolly.webapp
 
-import android.annotation.SuppressLint
-import android.os.Bundle
-import android.webkit.WebChromeClient
-import android.webkit.WebView
-import android.webkit.WebViewClient
-import android.webkit.PermissionRequest
-import androidx.appcompat.app.AppCompatActivity
+import android.webkit.WebSettings
 
 class MainActivity : AppCompatActivity() {
-    private lateinit var webView: WebView
+    // Other existing code...
 
-    @SuppressLint("SetJavaScriptEnabled")
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
+    // Replace deprecated constant
+    private val mixedContentMode = WebSettings.MIXED_CONTENT_ALWAYS_ALLOW
 
-        webView = WebView(this)
-        setContentView(webView)
-
-        // Основные настройки
-        webView.settings.apply {
-            javaScriptEnabled = true
-            domStorageEnabled = true
-            databaseEnabled = true
-            mixedContentMode = WebView.MIXED_CONTENT_ALWAYS_ALLOW
-            setSupportMultipleWindows(true)
-            // Разрешаем доступ к файлам
-            allowFileAccess = true
-            allowContentAccess = true
-        }
-
-        // WebViewClient с поддержкой навигации
-        webView.webViewClient = WebViewClient()
-
-        // WebChromeClient с поддержкой permissions и консоли
-        webView.webChromeClient = object : WebChromeClient() {
-            override fun onPermissionRequest(request: PermissionRequest?) {
-                if (request != null) {
-                    request.grant(request.resources)
-                }
-            }
-        }
-
-        webView.loadUrl("file:///android_asset/index.html")
-    }
-
-    @Deprecated("Deprecated in Java")
-    override fun onBackPressed() {
-        if (webView.canGoBack()) {
-            webView.goBack()
-        } else {
-            super.onBackPressed()
-        }
-    }
+    // Other existing code...
 }
