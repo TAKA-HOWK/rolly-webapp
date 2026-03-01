@@ -5,6 +5,7 @@ import android.os.Bundle
 import android.webkit.WebChromeClient
 import android.webkit.WebView
 import android.webkit.WebViewClient
+import android.webkit.PermissionRequest
 import androidx.appcompat.app.AppCompatActivity
 
 class MainActivity : AppCompatActivity() {
@@ -17,10 +18,30 @@ class MainActivity : AppCompatActivity() {
         webView = WebView(this)
         setContentView(webView)
 
-        webView.settings.javaScriptEnabled = true
-        webView.settings.domStorageEnabled = true
+        // Основные настройки
+        webView.settings.apply {
+            javaScriptEnabled = true
+            domStorageEnabled = true
+            databaseEnabled = true
+            mixedContentMode = WebView.MIXED_CONTENT_ALWAYS_ALLOW
+            setSupportMultipleWindows(true)
+            // Разрешаем доступ к файлам
+            allowFileAccess = true
+            allowContentAccess = true
+        }
+
+        // WebViewClient с поддержкой навигации
         webView.webViewClient = WebViewClient()
-        webView.webChromeClient = WebChromeClient()
+
+        // WebChromeClient с поддержкой permissions и консоли
+        webView.webChromeClient = object : WebChromeClient() {
+            override fun onPermissionRequest(request: PermissionRequest?) {
+                if (request != null) {
+                    request.grant(request.resources)
+                }
+            }
+        }
+
         webView.loadUrl("file:///android_asset/index.html")
     }
 
