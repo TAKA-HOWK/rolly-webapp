@@ -214,7 +214,7 @@ document.body.classList.add("loading");
 const appLoadStartedAt = Date.now();
 window.addEventListener("load", () => {
   const loadingScreen = document.getElementById("loadingScreen");
-  const minVisibleMs = 900;
+  const minVisibleMs = 2500;
   const elapsed = Date.now() - appLoadStartedAt;
   const waitMs = Math.max(0, minVisibleMs - elapsed);
 
