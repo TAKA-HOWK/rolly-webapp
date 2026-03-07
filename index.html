@@ -7,10 +7,10 @@
 <style>
   :root {--bg:#0f1115;--card:#171a21;--muted:#8a94a7;--text:#e7ecf3;--accent:#4aa3ff;--danger:#ff6b6b;}
   body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,Arial,sans-serif; overscroll-behavior-x: none;}
-     body.loading{overflow:hidden}
-  #loadingScreen{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:9999;opacity:1;visibility:visible;transition:opacity .100s ease,visibility .35s ease}
+  body.loading{overflow:hidden}
+  #loadingScreen{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:9999;opacity:1;visibility:visible;transition:opacity .350s ease,visibility .35s ease}
   #loadingScreen.hidden{opacity:0;visibility:hidden;pointer-events:none}
-  .loading-box img{width:clamp(1000px,100vw,1080px);height:clamp(1300px,100vw,1920px);display:block;object-fit:contain}
+  .loading-box img{width:clamp(180px,28vw,320px);height:clamp(180px,28vw,320px);display:block;object-fit:contain}
   .wrap{max-width:720px;margin:auto;padding:16px}
   .card{background:var(--card);border:1px solid #232634;border-radius:14px;padding:14px}
   h1{margin:8px 0 14px;font-size:20px}
