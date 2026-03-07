@@ -67,10 +67,9 @@ th, td {padding: 8px 6px;white-space: nowrap;}
 </style>
 </head>
 <body>
-  <div id="loadingScreen" aria-live="polite" aria-label="Загрузка приложения">
+<div id="loadingScreen" aria-live="polite" aria-label="Экран загрузки">
   <div class="loading-box">
-    <img src="loading.gif" alt="Загрузка" />
-    <p>Загрузка…</p>
+    <img src="loading.gif" alt="" />
   </div>
 </div>
 <div class="wrap">
@@ -212,8 +211,8 @@ th, td {padding: 8px 6px;white-space: nowrap;}
 <script>
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
 let rows=[];
-  
-  document.body.classList.add("loading");
+
+document.body.classList.add("loading");
 const appLoadStartedAt = Date.now();
 window.addEventListener("load", () => {
   const loadingScreen = document.getElementById("loadingScreen");
@@ -225,8 +224,9 @@ window.addEventListener("load", () => {
     loadingScreen?.classList.add("hidden");
     document.body.classList.remove("loading");
   }, waitMs);
-});  
-  // Приоритет сортировки систем
+});
+  
+ // Приоритет сортировки систем
 const systemOrder = [
   "mini", "mini d/n",
   "mgII", "mgs", "mgs d/n",
