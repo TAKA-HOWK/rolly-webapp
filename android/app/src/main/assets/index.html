@@ -43,7 +43,8 @@
   body.loading{overflow:hidden}
   #loadingScreen{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:9999;opacity:1;visibility:visible;transition:opacity .35s ease,visibility .35s ease}
   #loadingScreen.hidden{opacity:0;visibility:hidden;pointer-events:none}
-  .loading-box img{width:100%;max-width:450px;height:100%;max-height:800px;display:block; object-fit:contain;}
+  .loading-box{width:108vw;height:108vh;display:flex;align-items:center;justify-content:center;overflow:hidden;}
+  .loading-box img{width:100%;height:100%;display:block;object-fit:cover;}
   .wrap{max-width:720px;margin:auto;padding:16px}
   .card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px}
   .header{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
@@ -76,6 +77,55 @@
 .group-options div:hover {background: var(--dropdown-hover);}
   .edit, .del {font-size: 18px;padding: 6px 10px;border: none;background: transparent;cursor: pointer;}
   .muted{color:var(--muted)}
+  .bottom-dock{
+    position:fixed;
+    left:50%;
+    bottom:0;
+    transform:translateX(-50%);
+    width:min(680px,calc(100% - 20px));
+    background:color-mix(in srgb, var(--card) 92%, transparent);
+    backdrop-filter:blur(10px);
+    border:1px solid var(--border);
+    border-radius:16px;
+    padding:8px;
+    box-shadow:0 8px 28px rgba(0,0,0,.16);
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:8px;
+    z-index:1200;
+    transition:transform .28s ease,opacity .28s ease;
+  }
+  .bottom-dock button{
+    border:1px solid var(--border);
+    border-radius:10px;
+    background:var(--control-bg);
+    color:var(--text);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:20px 8px;
+    cursor:pointer;
+  }
+  .nav-icon{
+    width:24px;
+    height:24px;
+    display:block;
+  }
+  .nav-icon svg{
+    width:100%;
+    height:100%;
+    stroke:currentColor;
+    fill:none;
+    stroke-width:2;
+    stroke-linecap:round;
+    stroke-linejoin:round;
+  }
+  body.nav-hidden .bottom-dock{
+    transform:translate(-50%,calc(100% + 24px));
+    opacity:0;
+    pointer-events:none;
+  }
+  body{padding-bottom:220px;}
 
   @media (max-width: 600px) {
   h1 {font-size: 18px;text-align: center;}
@@ -95,6 +145,8 @@ th, td {padding: 8px 6px;white-space: nowrap;}
 #orderInfo div {font-size: 14px;}
 #sortSelect {font-size: 14px;padding: 8px;margin-top: 14px;}
 #notes {font-size: 14px;}
+.bottom-dock{bottom:0;width:calc(100% - 12px);padding:6px;gap:6px}
+.bottom-dock button{font-size:13px;padding:30px 4px}
 }
 
 </style>
@@ -244,6 +296,49 @@ th, td {padding: 8px 6px;white-space: nowrap;}
   </div>
 </div>
 
+<nav class="bottom-dock" aria-label="Быстрая навигация">
+  <button type="button" aria-label="Заказ" title="Заказ">
+    <span class="nav-icon" aria-hidden="true">
+      <svg viewBox="0 0 24 24">
+  <path d="M12 1C7 1 2.8 2.2 2.6 2.2S1 6.1 1 12s1.6 9.8 1.6 9.8S7 23 12 23s9.4-1.2 9.4-1.2S23 17.9 23 12 21.4 2.2 21.4 2.2 17 1 12 1z"/>
+  <path d="M16 9c-1.8 3.5-4.2 5.1-5 5.6-.6-.4-2.1-1.4-3-2.7"/>
+</svg>
+    </span>
+  </button>
+  <button type="button" aria-label="Инструкции" title="Инструкции">
+    <span class="nav-icon" aria-hidden="true">
+      <svg viewBox="0 0 24 24">
+  <circle cx="12" cy="12" r="11"/>
+  <circle cx="12" cy="8.3" r=".75"/>
+  <path d="M12 11.3v4.6"/>
+</svg>
+    </span>
+  </button>
+  <button type="button" aria-label="История" title="История">
+    <span class="nav-icon" aria-hidden="true">
+      <svg viewBox="0 0 24 24">
+  <path d="M12 2a10 10 0 1 1-9.7 12"/>
+  <path d="M3 8v3h3"/>
+  <path d="M12 8v4l3 2"/>
+</svg>
+    </span>
+  </button>
+  <button type="button" aria-label="Настройки" title="Настройки">
+    <span class="nav-icon" aria-hidden="true">
+      <svg viewBox="0 0 24 24">
+  <line x1="1" y1="6" x2="23" y2="6"/>
+  <circle cx="7" cy="6" r="2"/>
+
+  <line x1="1" y1="12" x2="23" y2="12"/>
+  <circle cx="17" cy="12" r="2"/>
+
+  <line x1="1" y1="18" x2="23" y2="18"/>
+  <circle cx="7" cy="18" r="2"/>
+</svg>
+    </span>
+  </button>
+</nav>
+
 <script>
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
 let rows=[];
@@ -280,6 +375,28 @@ window.addEventListener("load", () => {
     document.body.classList.remove("loading");
   }, waitMs);
 });
+
+let lastScrollY = window.scrollY;
+let scrollTicking = false;
+
+window.addEventListener("scroll", () => {
+  if (scrollTicking) return;
+
+  scrollTicking = true;
+  window.requestAnimationFrame(() => {
+    const currentY = window.scrollY;
+    const delta = currentY - lastScrollY;
+
+    if (currentY <= 20 || delta < -4) {
+      document.body.classList.remove("nav-hidden");
+    } else if (delta > 4) {
+      document.body.classList.add("nav-hidden");
+    }
+
+    lastScrollY = currentY;
+    scrollTicking = false;
+  });
+}, { passive: true });
 
  // Приоритет сортировки систем
 const systemOrder = [
