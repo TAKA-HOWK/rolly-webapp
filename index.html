@@ -43,8 +43,8 @@
   body.loading{overflow:hidden}
   #loadingScreen{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:9999;opacity:1;visibility:visible;transition:opacity .35s ease,visibility .35s ease}
   #loadingScreen.hidden{opacity:0;visibility:hidden;pointer-events:none}
-  .loading-box{width:108vw;height:108vh;display:flex;align-items:center;justify-content:center;overflow:hidden;}
-  .loading-box img{width:100%;height:100%;display:block;object-fit:cover;}
+  .loading-box{width:min(92vw,560px);height:min(84vh,980px);display:flex;align-items:center;justify-content:center;}
+  .loading-box img{width:100%;height:100%;max-width:560px;max-height:980px;display:block;object-fit:contain;}
   .wrap{max-width:720px;margin:auto;padding:16px}
   .card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px}
   .header{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
@@ -80,7 +80,7 @@
   .bottom-dock{
     position:fixed;
     left:50%;
-    bottom:12px;
+    bottom:0;
     transform:translateX(-50%);
     width:min(680px,calc(100% - 20px));
     background:color-mix(in srgb, var(--card) 92%, transparent);
@@ -101,7 +101,7 @@
     background:var(--control-bg);
     color:var(--text);
     font-weight:600;
-    padding:10px 8px;
+    padding:30px 8px;
     cursor:pointer;
   }
   body.nav-hidden .bottom-dock{
@@ -109,7 +109,7 @@
     opacity:0;
     pointer-events:none;
   }
-  body{padding-bottom:90px;}
+  body{padding-bottom:220px;}
 
   @media (max-width: 600px) {
   h1 {font-size: 18px;text-align: center;}
@@ -129,9 +129,8 @@ th, td {padding: 8px 6px;white-space: nowrap;}
 #orderInfo div {font-size: 14px;}
 #sortSelect {font-size: 14px;padding: 8px;margin-top: 14px;}
 #notes {font-size: 14px;}
-.loading-box{width:112vw;height:112vh;}
-.bottom-dock{bottom:8px;width:calc(100% - 12px);padding:6px;gap:6px}
-.bottom-dock button{font-size:13px;padding:10px 4px}
+.bottom-dock{bottom:0;width:calc(100% - 12px);padding:6px;gap:6px}
+.bottom-dock button{font-size:13px;padding:30px 4px}
 }
 
 </style>
