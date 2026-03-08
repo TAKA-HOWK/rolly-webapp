@@ -76,6 +76,39 @@
 .group-options div:hover {background: var(--dropdown-hover);}
   .edit, .del {font-size: 18px;padding: 6px 10px;border: none;background: transparent;cursor: pointer;}
   .muted{color:var(--muted)}
+  .bottom-dock{
+    position:fixed;
+    left:50%;
+    bottom:12px;
+    transform:translateX(-50%);
+    width:min(680px,calc(100% - 20px));
+    background:color-mix(in srgb, var(--card) 92%, transparent);
+    backdrop-filter:blur(10px);
+    border:1px solid var(--border);
+    border-radius:16px;
+    padding:8px;
+    box-shadow:0 8px 28px rgba(0,0,0,.16);
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:8px;
+    z-index:1200;
+    transition:transform .28s ease,opacity .28s ease;
+  }
+  .bottom-dock button{
+    border:1px solid var(--border);
+    border-radius:10px;
+    background:var(--control-bg);
+    color:var(--text);
+    font-weight:600;
+    padding:10px 8px;
+    cursor:pointer;
+  }
+  body.nav-hidden .bottom-dock{
+    transform:translate(-50%,calc(100% + 24px));
+    opacity:0;
+    pointer-events:none;
+  }
+  body{padding-bottom:90px;}
 
   @media (max-width: 600px) {
   h1 {font-size: 18px;text-align: center;}
@@ -95,6 +128,8 @@ th, td {padding: 8px 6px;white-space: nowrap;}
 #orderInfo div {font-size: 14px;}
 #sortSelect {font-size: 14px;padding: 8px;margin-top: 14px;}
 #notes {font-size: 14px;}
+.bottom-dock{bottom:8px;width:calc(100% - 12px);padding:6px;gap:6px}
+.bottom-dock button{font-size:13px;padding:10px 4px}
 }
 
 </style>
@@ -244,6 +279,13 @@ th, td {padding: 8px 6px;white-space: nowrap;}
   </div>
 </div>
 
+<nav class="bottom-dock" aria-label="Быстрая навигация">
+  <button type="button">Заказ</button>
+  <button type="button">Инструкции</button>
+  <button type="button">История</button>
+  <button type="button">Настройки</button>
+</nav>
+
 <script>
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
 let rows=[];
@@ -280,6 +322,28 @@ window.addEventListener("load", () => {
     document.body.classList.remove("loading");
   }, waitMs);
 });
+
+let lastScrollY = window.scrollY;
+let scrollTicking = false;
+
+window.addEventListener("scroll", () => {
+  if (scrollTicking) return;
+
+  scrollTicking = true;
+  window.requestAnimationFrame(() => {
+    const currentY = window.scrollY;
+    const delta = currentY - lastScrollY;
+
+    if (currentY <= 20 || delta < -4) {
+      document.body.classList.remove("nav-hidden");
+    } else if (delta > 4) {
+      document.body.classList.add("nav-hidden");
+    }
+
+    lastScrollY = currentY;
+    scrollTicking = false;
+  });
+}, { passive: true });
 
  // Приоритет сортировки систем
 const systemOrder = [
