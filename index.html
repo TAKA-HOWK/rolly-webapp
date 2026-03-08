@@ -80,7 +80,7 @@
   .bottom-dock{
     position:fixed;
     left:50%;
-    bottom:12px;
+    bottom:0;
     transform:translateX(-50%);
     width:min(680px,calc(100% - 20px));
     background:color-mix(in srgb, var(--card) 92%, transparent);
@@ -101,7 +101,7 @@
     background:var(--control-bg);
     color:var(--text);
     font-weight:600;
-    padding:10px 8px;
+    padding:30px 8px;
     cursor:pointer;
   }
   body.nav-hidden .bottom-dock{
@@ -109,7 +109,7 @@
     opacity:0;
     pointer-events:none;
   }
-  body{padding-bottom:90px;}
+  body{padding-bottom:220px;}
 
   @media (max-width: 600px) {
   h1 {font-size: 18px;text-align: center;}
@@ -129,8 +129,8 @@ th, td {padding: 8px 6px;white-space: nowrap;}
 #orderInfo div {font-size: 14px;}
 #sortSelect {font-size: 14px;padding: 8px;margin-top: 14px;}
 #notes {font-size: 14px;}
-.bottom-dock{bottom:8px;width:calc(100% - 12px);padding:6px;gap:6px}
-.bottom-dock button{font-size:13px;padding:10px 4px}
+.bottom-dock{bottom:0;width:calc(100% - 12px);padding:6px;gap:6px}
+.bottom-dock button{font-size:13px;padding:30px 4px}
 }
 
 </style>
