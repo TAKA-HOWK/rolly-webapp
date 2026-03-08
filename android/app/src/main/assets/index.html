@@ -5,52 +5,87 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Заказ рольштор</title>
 <style>
-  :root {--bg:#0f1115;--card:#171a21;--muted:#8a94a7;--text:#e7ecf3;--accent:#4aa3ff;--danger:#ff6b6b;}
+  :root {
+    --bg:#f5f7fb;
+    --card:#ffffff;
+    --muted:#5d6679;
+    --text:#151b28;
+    --accent:#2a7ee8;
+    --danger:#c92a2a;
+    --border:#d9deea;
+    --control-bg:#ffffff;
+    --header-bg:#ecf2ff;
+    --header-text:#1b3b78;
+    --pill-border:#c4ccde;
+    --btn-secondary-bg:#eef2fb;
+    --btn-secondary-text:#1b2538;
+    --dropdown-group-bg:#f1f5fd;
+    --dropdown-hover:#e4ebfa;
+  }
+  body[data-theme="dark"] {
+    --bg:#0f1115;
+    --card:#171a21;
+    --muted:#8a94a7;
+    --text:#e7ecf3;
+    --accent:#4aa3ff;
+    --danger:#ff6b6b;
+    --border:#2a2f3d;
+    --control-bg:#10131a;
+    --header-bg:#111520;
+    --header-text:#cfe2ff;
+    --pill-border:#2a2f3d;
+    --btn-secondary-bg:#121620;
+    --btn-secondary-text:#e7ecf3;
+    --dropdown-group-bg:#1e232c;
+    --dropdown-hover:#2a2f3d;
+  }
   body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,Arial,sans-serif; overscroll-behavior-x: none;}
   body.loading{overflow:hidden}
   #loadingScreen{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:9999;opacity:1;visibility:visible;transition:opacity .35s ease,visibility .35s ease}
   #loadingScreen.hidden{opacity:0;visibility:hidden;pointer-events:none}
   .loading-box img{width:100%;max-width:450px;height:auto;max-height:800px;display:block; object-fit:contain;}
   .wrap{max-width:720px;margin:auto;padding:16px}
-  .card{background:var(--card);border:1px solid #232634;border-radius:14px;padding:14px}
+  .card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px}
+  .header{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
   h1{margin:8px 0 14px;font-size:20px}
   .grid{display:grid;gap:10px}
   .row{display:flex;gap:10px}
   label{display:block;font-size:12px;color:var(--muted);margin-bottom:6px}
-  input,select{width:100%;padding:10px;border-radius:12px;border:1px solid #2a2f3d;background:#10131a;color:var(--text)}
-  .pill{padding:8px 12px;border-radius:999px;border:1px solid #2a2f3d;cursor:pointer;display:inline-block}
+  input,select,textarea{width:100%;padding:10px;border-radius:12px;border:1px solid var(--border);background:var(--control-bg);color:var(--text)}
+  .pill{padding:8px 12px;border-radius:999px;border:1px solid var(--pill-border);cursor:pointer;display:inline-block}
   .pill.active{border-color:#315aee}
-  .pillr{padding:8px 12px;border-radius:999px;border:1px solid #2a2f3d;cursor:pointer;display:inline-block}
+  .pillr{padding:8px 12px;border-radius:999px;border:1px solid var(--pill-border);cursor:pointer;display:inline-block}
   .pillr.active{border-color:#315aee}
   .btn{padding:10px 14px;border-radius:10px;border:none;cursor:pointer;font-weight:600}
   .btn.primary{background:linear-gradient(180deg,var(--accent),#2a7ee8);color:#fff}
-  .btn.secondary{background:#121620;color:var(--text);border:1px solid #2a2f3d}
+  .btn.secondary{background:var(--btn-secondary-bg);color:var(--btn-secondary-text);border:1px solid var(--border)}
   .btns{display:flex;flex-wrap:wrap;gap:10px;margin-top:12px}
   .table-wrap{overflow-x:auto;-webkit-overflow-scrolling: touch;margin-top:14px}
   table{width:100%;min-width:640px;border-collapse:collapse}
-  th,td{padding:8px 10px;border-bottom:1px solid #232634;font-size:14px}
-  thead th{background:#111520;color:#cfe2ff;font-size:12px}
+  th,td{padding:8px 10px;border-bottom:1px solid var(--border);font-size:14px}
+  thead th{background:var(--header-bg);color:var(--header-text);font-size:12px}
   .tag{color:#b9f4ce;font-size:12px}
   .right{text-align:right}
   .del{border:none;background:transparent;color:var(--danger);cursor:pointer}
   .dropdown {position: relative;display: inline-block;width: 250px;z-index: 1000;}
-.dropdown-toggle {padding: 10px;background: #2a2f3d;color: #fff;cursor: pointer;border-radius: 8px;}
-.dropdown-menu {display: none;position: absolute;background: #171a21;border: 1px solid #333;width: 100%;max-height: 300px;overflow-y: auto;border-radius: 8px;z-index: 10;}
-.group-label {padding: 10px;cursor: pointer;background: #1e232c;font-weight: bold;color: #4aa3ff;}
+.dropdown-toggle {padding: 10px;background: var(--control-bg);color: var(--text);cursor: pointer;border-radius: 8px;border:1px solid var(--border)}
+.dropdown-menu {display: none;position: absolute;background: var(--card);border: 1px solid var(--border);width: 100%;max-height: 300px;overflow-y: auto;border-radius: 8px;z-index: 10;}
+.group-label {padding: 10px;cursor: pointer;background: var(--dropdown-group-bg);font-weight: bold;color: var(--accent);}
 .group-options {display: none;}
-.group-options div {padding: 8px 14px;cursor: pointer;color: #e7ecf3;}
-.group-options div:hover {background: #2a2f3d;}
+.group-options div {padding: 8px 14px;cursor: pointer;color: var(--text);}
+.group-options div:hover {background: var(--dropdown-hover);}
   .edit, .del {font-size: 18px;padding: 6px 10px;border: none;background: transparent;cursor: pointer;}
-  
+  .muted{color:var(--muted)}
+
   @media (max-width: 600px) {
   h1 {font-size: 18px;text-align: center;}
 .grid, .row {display: block;}
 input, select, textarea {font-size: 16px;padding: 12px;border-radius: 10px;}
 label {font-size: 13px;margin-bottom: 4px;}
 .btns {flex-direction: column;align-items: stretch;}
-.btn {width: 70%;padding: 14px;font-size: 16px;}
+.btn {width: 100%;padding: 14px;font-size: 16px;}
 .pill, .pillr {display: inline-block;margin-bottom: 6px;}
-.dropdown {width: 70%;}
+.dropdown {width: 100%;}
 .dropdown-toggle {padding: 12px;font-size: 16px;}
 .dropdown-menu {max-height: 220px;font-size: 15px;}
 .table-wrap {overflow-x: auto;}
@@ -65,14 +100,17 @@ th, td {padding: 8px 6px;white-space: nowrap;}
 </style>
 </head>
 <body>
- <div id="loadingScreen" aria-live="polite" aria-label="Экран загрузки">
+<div id="loadingScreen" aria-live="polite" aria-label="Экран загрузки">
   <div class="loading-box">
     <img src="loading.gif" alt="" />
   </div>
 </div>
 <div class="wrap">
   <div class="card">
-    <h1>Заказ рольштор</h1>
+    <div class="header">
+      <h1>Заказ рольштор</h1>
+      <button class="btn secondary" id="themeToggle" type="button">🌙 Тёмная тема</button>
+    </div>
     <div class="grid">
       <div><label>Дата заказа:</label><input id="date" type="date" title="Укажите дату оформления заказа"></div>
        <div><label>Номер заказа:</label><input id="numb" type="number" title="Введите номер для отслеживания"></div>
@@ -80,7 +118,7 @@ th, td {padding: 8px 6px;white-space: nowrap;}
       <br>
 
       <input type="hidden" name="system" id="systemInput" value="">
-      
+
       <div class="dropdown" id="systemDropdown">
   <div class="dropdown-toggle">Выберите систему</div> <br>
   <div class="dropdown-menu">
@@ -153,7 +191,7 @@ th, td {padding: 8px 6px;white-space: nowrap;}
           <span class="pillr" data-val="ВГШ" title="Внешний габарит штапика">ВГШ</span>
           <span class="pillr" data-val="по Ткани" title="Размеры только по ткани">по Ткани</span>
           <span class="pillr" data-val="по Габаритам" title="Полный габарит изделия">по Габаритам</span>
-              </div>   
+              </div>
         </div>
 
       <div><label>Сторона управления:</label>
@@ -167,25 +205,25 @@ th, td {padding: 8px 6px;white-space: nowrap;}
       <div style="align-self:end"><button class="btn primary" id="addBtn" title="Добавить изделие в таблицу ниже">Добавить в заказ</button></div>
       <br>
     </div>
-    
+
 <div id="orderInfo" style="margin-top:20px;margin-bottom:10px;display:none;">
    <div><strong>Дата заказа:</strong> <span id="dateNumberDisplay"></span></div>
   <div><strong>Номер заказа:</strong> <span id="orderNumberDisplay"></span></div>
   <div><strong>Заказчик:</strong> <span id="customerDisplay"></span></div>
 </div>
-    
-    
+
+
     <div class="table-wrap">
       <table id="ordersTable">
         <thead><tr><th>#</th><th>Система</th><th>Цвет</th><th>Ширина(См)</th><th>Высота(См)</th><th>Размеры</th><th>Управление</th><th>Кол-во</th><th></th></tr></thead>
-        <tbody id="tbody"><tr><td colspan="8" style="color:#8a94a7">Нет позиций</td></tr></tbody>
+        <tbody id="tbody"><tr><td colspan="8" class="muted">Нет позиций</td></tr></tbody>
       </table>
     </div>
-    
+
 <div style="margin-top:12px; display: flex; gap: 12px; align-items: center;">
   <label style="font-size:13px; color: var(--muted);">
     Сортировать по:
-    <select id="sortSelect" style="padding:6px 10px;border-radius:6px;background:#10131a;color:#e7ecf3;border:1px solid #2a2f3d;margin-left:6px;">
+    <select id="sortSelect" style="padding:6px 10px;border-radius:6px;background:var(--control-bg);color:var(--text);border:1px solid var(--border);margin-left:6px;">
       <option value="">Нет</option>
       <option value="system">Системе</option>
       <option value="width">Ширине</option>
@@ -194,14 +232,14 @@ th, td {padding: 8px 6px;white-space: nowrap;}
   </label>
 </div>
 
-    
+
     <div style="margin-top:16px;">
   <label for="notes" style="color:var(--muted);font-size:13px;">Примечание:</label>
-  <textarea id="notes" rows="3" style="width:100%;padding:10px;border-radius:10px;border:1px solid #2a2f3d;background:#10131a;color:#e7ecf3;"></textarea>
+  <textarea id="notes" rows="3" style="width:100%;padding:10px;border-radius:10px;border:1px solid var(--border);background:var(--control-bg);color:var(--text);"></textarea>
 </div>
       <div class="btns">
       <button class="btn primary" id="saveJpeg" title="Сохранить заказ как изображение (JPEG)">Сохранить JPEG</button>
-      <button class="btn secondary" id="clearBtn" title="Очистить таблицу и форму">Очистить</button> 
+      <button class="btn secondary" id="clearBtn" title="Очистить таблицу и форму">Очистить</button>
     </div>
   </div>
 </div>
@@ -209,6 +247,25 @@ th, td {padding: 8px 6px;white-space: nowrap;}
 <script>
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
 let rows=[];
+
+const THEME_KEY = "rolly-theme";
+const themeToggle = document.getElementById("themeToggle");
+
+function applyTheme(theme) {
+  const normalizedTheme = theme === "dark" ? "dark" : "light";
+  document.body.setAttribute("data-theme", normalizedTheme);
+  themeToggle.textContent = normalizedTheme === "dark" ? "☀️ Светлая тема" : "🌙 Тёмная тема";
+}
+
+const savedTheme = localStorage.getItem(THEME_KEY) || "light";
+applyTheme(savedTheme);
+
+themeToggle.addEventListener("click", () => {
+  const currentTheme = document.body.getAttribute("data-theme") === "dark" ? "dark" : "light";
+  const nextTheme = currentTheme === "dark" ? "light" : "dark";
+  applyTheme(nextTheme);
+  localStorage.setItem(THEME_KEY, nextTheme);
+});
 
 document.body.classList.add("loading");
 const appLoadStartedAt = Date.now();
@@ -223,8 +280,8 @@ window.addEventListener("load", () => {
     document.body.classList.remove("loading");
   }, waitMs);
 });
-    
-  // Приоритет сортировки систем
+
+ // Приоритет сортировки систем
 const systemOrder = [
   "mini", "mini d/n",
   "mgII", "mgs", "mgs d/n",
@@ -234,7 +291,7 @@ const systemOrder = [
   "Uni-2 E!", "us 38 Standart E!", "us 38 lux E!", "us 38 lux D/N E!", "us 38 Cassette E!", "us 38 Fabric E!", "us 38 Square E!", "us 45 E!"
 ];
 
-    
+
     // по чём размеры
 $("#basis").onclick=e=>{
   const p=e.target.closest(".pillr");
@@ -266,7 +323,7 @@ function render() {
   tb.innerHTML = "";
 
   if (!rows.length) {
-    tb.innerHTML = `<tr><td colspan=8 style="color:#8a94a7">Нет позиций</td></tr>`;
+    tb.innerHTML = `<tr><td colspan=8 class="muted">Нет позиций</td></tr>`;
     return;
   }
 
@@ -303,7 +360,7 @@ function render() {
     render();
   });
 }
-  
+
   // обновлять таблицу при смене типа сортировки
 $("#sortSelect").addEventListener("change", () => {
   render();
@@ -311,22 +368,22 @@ $("#sortSelect").addEventListener("change", () => {
 
 
 // кнопки
- 
+
    $("#addBtn").onclick = () => {
   const color = $("#color").value.trim();
   const w = parseFloat($("#width").value.replace(",", "."));
   const h = parseFloat($("#height").value.replace(",", "."));
   const q = +$("#qty").value;
-       
+
   const basis = getBasis();
-  const side = getSide();   
+  const side = getSide();
   const system = $("#systemInput").value;
-     
+
   if (!system) return alert("Выберите систему");
   if (!color || !w || !h || !q) return alert("Заполните все поля");
   if (!basis) return alert("Выберите, по чем размеры");
   if (!side) return alert("Выберите сторону управления");
-     
+
      // Показать заказчика и номер заказа
 $("#dateNumberDisplay").textContent = $("#date").value.trim();
 $("#orderNumberDisplay").textContent = $("#numb").value.trim();
@@ -343,7 +400,7 @@ $("#orderInfo").style.display = "block";
     qty: q
   });
      render();
-     
+
  // Очистить всё
 $("#clearBtn").onclick = () => {
   const hasTableData = rows.length > 0;
@@ -386,9 +443,9 @@ $("#clearBtn").onclick = () => {
   }
 };
 
-       
+
   render();
-     
+
        $$("#tbody .edit").forEach(b => b.onclick = () => {
     const index = b.dataset.i;
     const item = rows[index];
@@ -425,7 +482,7 @@ $("#clearBtn").onclick = () => {
   $("#height").value = "";
   $("#qty").value = "";
   //$("#customer").value = "";
-       
+
   $$("#basis .pillr").forEach(el => el.classList.remove("active"));
   const defaultBasis = $$("#basis .pillr")[0];
   if (defaultBasis) defaultBasis.classList.add("active");
@@ -433,15 +490,15 @@ $("#clearBtn").onclick = () => {
   $$("#sideGroup .pill").forEach(el => el.classList.remove("active"));
   const defaultSide = Array.from($$("#sideGroup .pill")).find(el => el.dataset.val === "");
   if (defaultSide) defaultSide.classList.add("active");
-     
+
      // Очистка отображения данных заказа после нажатия кнопки добавить
   //$("#dateNumberDisplay").textContent = "";
   //$("#orderNumberDisplay").textContent = "";
-     
+
 };
 
-    
-    
+
+
 // --- JPEG экспорт с разбивкой на страницы A4 ---
 function blobFromCanvas(canvas, quality) {
   return new Promise((resolve, reject) => {
@@ -477,7 +534,6 @@ async function tryShareFiles(files) {
     return false;
   }
 }
-
 async function tryAndroidSaveImage(dataUrl, filename) {
   if (!window.AndroidBridge || typeof window.AndroidBridge.saveImage !== "function") return false;
   try {
@@ -487,6 +543,7 @@ async function tryAndroidSaveImage(dataUrl, filename) {
     return false;
   }
 }
+
 function openImageFallback(dataUrl) {
   const w = window.open("", "_blank");
   if (!w) {
@@ -496,6 +553,7 @@ function openImageFallback(dataUrl) {
   w.document.write(`<img src="${dataUrl}" style="max-width:100%;height:auto;display:block;margin:0 auto" />`);
   w.document.close();
 }
+
 function showInlineExportPanel(pages, files) {
   const old = document.getElementById("exportPanel");
   if (old) old.remove();
@@ -515,7 +573,7 @@ function showInlineExportPanel(pages, files) {
     <div style="margin-bottom:10px">${shareBtn}<button class="btn secondary" id="closeExportPanel">Скрыть</button></div>
     <div id="exportPages"></div>
   `;
-  
+
   const pagesWrap = panel.querySelector("#exportPages");
   pages.forEach((p, i) => {
     const item = document.createElement("div");
@@ -531,7 +589,6 @@ function showInlineExportPanel(pages, files) {
     pagesWrap.appendChild(item);
   });
 
-
   panel.querySelectorAll('.downloadPageBtn').forEach(btn => {
     btn.onclick = () => {
       const idx = Number(btn.dataset.index);
@@ -546,6 +603,7 @@ function showInlineExportPanel(pages, files) {
       openImageFallback(pages[idx].dataUrl);
     };
   });
+
   panel.querySelector("#closeExportPanel").onclick = () => panel.remove();
 
   const share = panel.querySelector("#shareExportFiles");
@@ -559,8 +617,9 @@ function showInlineExportPanel(pages, files) {
   document.querySelector(".wrap").appendChild(panel);
 }
 
+
 $("#saveJpeg").onclick = async () => {
-  
+
   if (!rows.length) {
     alert("Таблица пуста");
     return;
@@ -570,14 +629,13 @@ $("#saveJpeg").onclick = async () => {
   const pageWidth = 842;
   const pageHeight = 595;
   const margin = 40;
-  
-// Настройки сжатия (можно менять под баланс качества/веса файла)
+
+  // Настройки сжатия (можно менять под баланс качества/веса файла)
   const exportDpi = 1.5;      // чем меньше, тем меньше размер JPEG
   const exportQuality = 0.72; // диапазон 0..1
 
   const contentWidth = pageWidth - margin * 2;
 
-  // Данные формы
   const dateNumber = $("#date").value.trim();
   const orderNumber = $("#numb").value.trim();
   const customer = $("#customer").value.trim();
@@ -605,14 +663,12 @@ $("#saveJpeg").onclick = async () => {
     const ctx = canvas.getContext("2d");
     ctx.scale(exportDpi, exportDpi);
 
-    // Белый фон
     ctx.fillStyle = "#ffffff";
     ctx.fillRect(0, 0, pageWidth, pageHeight);
 
     let xStart = margin;
     let yStart = margin;
 
-    // --- Блок: Заголовки заказа ---
     ctx.fillStyle = "#000";
     ctx.font = "bold 16px Arial";
     ctx.textBaseline = "top";
@@ -620,7 +676,6 @@ $("#saveJpeg").onclick = async () => {
     ctx.fillText(`Номер заказа: ${orderNumber || "-"}`, xStart + 210, yStart);
     ctx.fillText(`Заказчик: ${customer || "-"}`, xStart + 420, yStart);
 
-    // --- Блок: Заголовки таблицы ---
     yStart += orderInfoH;
     ctx.fillStyle = "#ddd";
     ctx.fillRect(xStart, yStart, contentWidth, headH);
@@ -635,7 +690,6 @@ $("#saveJpeg").onclick = async () => {
       colX += colW[i];
     });
 
-    // --- Строки таблицы ---
     const startRow = page * maxRows;
     const endRow = Math.min(startRow + maxRows, rows.length);
     const currentRows = rows.slice(startRow, endRow);
@@ -658,7 +712,6 @@ $("#saveJpeg").onclick = async () => {
       });
     });
 
-    // --- Примечание — только на последней странице ---
     if (page === totalPages - 1 && notes) {
       const yNotes = yStart + headH + currentRows.length * rowH + 10;
       ctx.fillStyle = "#444";
@@ -672,25 +725,22 @@ $("#saveJpeg").onclick = async () => {
       });
     }
 
-    // --- Номер страницы ---
     ctx.fillStyle = "#999";
     ctx.font = "12px Arial";
     ctx.fillText(`Страница ${page + 1} из ${totalPages}`, pageWidth - margin - 120, pageHeight - margin + 5);
 
-    // --- Сохранить как JPEG ---
     const blob = await blobFromCanvas(canvas, exportQuality);
     const filename = `rolshtory_page_${page + 1}.jpg`;
     const file = new File([blob], filename, { type: "image/jpeg" });
     const dataUrl = canvas.toDataURL("image/jpeg", exportQuality);
 
 
-pageArtifacts.push({ filename, blob, dataUrl });
-    
+    pageArtifacts.push({ filename, blob, dataUrl });
     files.push(file);
   }
   const shared = await tryShareFiles(files);
   if (!shared) {
-   let savedToAndroid = false;
+  let savedToAndroid = false;
     if (window.AndroidBridge && typeof window.AndroidBridge.saveImage === "function") {
       const results = await Promise.all(pageArtifacts.map((p) => tryAndroidSaveImage(p.dataUrl, p.filename)));
       savedToAndroid = results.every(Boolean);
@@ -705,16 +755,16 @@ pageArtifacts.push({ filename, blob, dataUrl });
   }
 
 
-showInlineExportPanel(pageArtifacts, files);
+ showInlineExportPanel(pageArtifacts, files);
 };
 
 
 
 
 render();
-  
+
   //выпадающий список с выбором систем
-  
+
 const dropdown = document.getElementById('systemDropdown');
 const toggle = dropdown.querySelector('.dropdown-toggle');
 const menu = dropdown.querySelector('.dropdown-menu');
@@ -754,8 +804,8 @@ document.addEventListener('click', e => {
     menu.style.display = 'none';
     dropdown.querySelectorAll('.group-options').forEach(o => o.style.display = 'none');
   }
-}); 
-  
+});
+
 </script>
 </body>
 </html>
