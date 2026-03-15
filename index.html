@@ -920,18 +920,6 @@ function tryAutoDownloadBlob(blob, filename) {
   setTimeout(() => URL.revokeObjectURL(url), 8000);
 }
 
-async function tryShareFiles(files) {
-  if (!navigator.share || !navigator.canShare || !navigator.canShare({ files })) return false;
-  try {
-    await navigator.share({ files, title: "Таблица заказа JPEG" });
-    return true;
-  } catch (err) {
-    if (err?.name !== "AbortError") {
-      console.warn("Share failed", err);
-    }
-    return false;
-  }
-}
 async function tryAndroidSaveImage(dataUrl, filename) {
   if (!window.AndroidBridge || typeof window.AndroidBridge.saveImage !== "function") return false;
   try {
@@ -941,80 +929,6 @@ async function tryAndroidSaveImage(dataUrl, filename) {
     return false;
   }
 }
-
-function openImageFallback(dataUrl) {
-  const w = window.open("", "_blank");
-  if (!w) {
-    showToast("Браузер заблокировал открытие изображения. Попробуйте удерживать картинку в блоке экспорта и выбрать «Сохранить».", "error", 4200);
-    return;
-  }
-  w.document.write(`<img src="${dataUrl}" style="max-width:100%;height:auto;display:block;margin:0 auto" />`);
-  w.document.close();
-}
-
-function showInlineExportPanel(pages, files) {
-  const old = document.getElementById("exportPanel");
-  if (old) old.remove();
-
-  const panel = document.createElement("div");
-  panel.id = "exportPanel";
-  panel.className = "card";
-  panel.style.marginTop = "12px";
-
-  const shareBtn = navigator.share
-    ? `<button class="btn secondary" id="shareExportFiles" style="margin-right:8px">Поделиться JPEG</button>`
-    : "";
-
-  panel.innerHTML = `
-    <h3 style="margin:0 0 8px">Экспорт JPEG</h3>
-    <p style="margin:0 0 10px;color:#8a94a7">Если загрузка не началась автоматически, нажмите «Скачать» у нужной страницы.</p>
-    <div style="margin-bottom:10px">${shareBtn}<button class="btn secondary" id="closeExportPanel">Скрыть</button></div>
-    <div id="exportPages"></div>
-  `;
-
-  const pagesWrap = panel.querySelector("#exportPages");
-  pages.forEach((p, i) => {
-    const item = document.createElement("div");
-    item.style.marginBottom = "14px";
-    item.innerHTML = `
-      <div style="margin-bottom:6px"><strong>Страница ${i + 1}</strong></div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px">
-        <button class="btn primary downloadPageBtn" data-index="${i}">Скачать ${p.filename}</button>
-        <button class="btn secondary openPageBtn" data-index="${i}">Открыть изображение</button>
-      </div>
-      <img src="${p.dataUrl}" alt="${p.filename}" style="display:block;max-width:100%;height:auto;border:1px solid #2a2f3d;background:#fff" />
-    `;
-    pagesWrap.appendChild(item);
-  });
-
-  panel.querySelectorAll('.downloadPageBtn').forEach(btn => {
-    btn.onclick = () => {
-      const idx = Number(btn.dataset.index);
-      const page = pages[idx];
-      tryAutoDownloadBlob(page.blob, page.filename);
-    };
-  });
-
-  panel.querySelectorAll('.openPageBtn').forEach(btn => {
-    btn.onclick = () => {
-      const idx = Number(btn.dataset.index);
-      openImageFallback(pages[idx].dataUrl);
-    };
-  });
-
-  panel.querySelector("#closeExportPanel").onclick = () => panel.remove();
-
-  const share = panel.querySelector("#shareExportFiles");
-  if (share) {
-    share.onclick = async () => {
-      const ok = await tryShareFiles(files);
-      if (!ok) showToast("Не удалось открыть меню «Поделиться». Попробуйте кнопку «Скачать».", "error");
-    };
-  }
-
-  document.querySelector(".wrap").appendChild(panel);
-}
-
 
 $("#saveJpeg").onclick = async () => {
 
@@ -1051,7 +965,6 @@ $("#saveJpeg").onclick = async () => {
   const totalPages = Math.ceil(rows.length / maxRows);
 
   const pageArtifacts = [];
-  const files = [];
 
   for (let page = 0; page < totalPages; page++) {
     const canvas = document.createElement("canvas");
@@ -1129,12 +1042,10 @@ $("#saveJpeg").onclick = async () => {
 
     const blob = await blobFromCanvas(canvas, exportQuality);
     const filename = `rolshtory_page_${page + 1}.jpg`;
-    const file = new File([blob], filename, { type: "image/jpeg" });
     const dataUrl = canvas.toDataURL("image/jpeg", exportQuality);
 
 
     pageArtifacts.push({ filename, blob, dataUrl });
-    files.push(file);
   }
 
   const savedAt = new Date().toLocaleString("ru-RU");
@@ -1149,24 +1060,18 @@ $("#saveJpeg").onclick = async () => {
   saveHistoryItems(historyItems);
   renderHistory();
 
-  const shared = await tryShareFiles(files);
-  if (!shared) {
   let savedToAndroid = false;
-    if (window.AndroidBridge && typeof window.AndroidBridge.saveImage === "function") {
-      const results = await Promise.all(pageArtifacts.map((p) => tryAndroidSaveImage(p.dataUrl, p.filename)));
-      savedToAndroid = results.every(Boolean);
-      if (!savedToAndroid) {
-        showToast("Не удалось сохранить часть файлов в память телефона. Запускаю браузерное скачивание.", "error", 4200);
-      }
-    }
-
+  if (window.AndroidBridge && typeof window.AndroidBridge.saveImage === "function") {
+    const results = await Promise.all(pageArtifacts.map((p) => tryAndroidSaveImage(p.dataUrl, p.filename)));
+    savedToAndroid = results.every(Boolean);
     if (!savedToAndroid) {
-      pageArtifacts.forEach((p) => tryAutoDownloadBlob(p.blob, p.filename));
+      showToast("Не удалось сохранить часть файлов в память телефона. Запускаю браузерное скачивание.", "error", 4200);
     }
   }
 
-
- showInlineExportPanel(pageArtifacts, files);
+  if (!savedToAndroid) {
+    pageArtifacts.forEach((p) => tryAutoDownloadBlob(p.blob, p.filename));
+  }
 };
 
 
