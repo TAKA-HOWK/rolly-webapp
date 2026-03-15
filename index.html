@@ -520,6 +520,13 @@ th, td {padding: 8px 6px;white-space: nowrap;}
 
 <script>
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
+function formatOrderDate(value) {
+  if (!value) return "";
+  const [year, month, day] = value.split("-");
+  if (!year || !month || !day) return value;
+  return `${month}.${day}.${year}`;
+}
+
 function showToast(message, type = "info", timeout = 3200) {
   const viewport = document.getElementById("toastViewport");
   if (!viewport) return;
@@ -950,7 +957,7 @@ $("#sortSelect").addEventListener("change", () => {
   if (!side) return showToast("Выберите сторону управления", "error");
 
      // Показать заказчика и номер заказа
-$("#dateNumberDisplay").textContent = $("#date").value.trim();
+$("#dateNumberDisplay").textContent = formatOrderDate($("#date").value.trim());
 $("#orderNumberDisplay").textContent = $("#numb").value.trim();
 $("#customerDisplay").textContent = $("#customer").value.trim();
 $("#orderInfo").style.display = "block";
@@ -1117,7 +1124,7 @@ $("#saveJpeg").onclick = async () => {
 
   const contentWidth = pageWidth - margin * 2;
 
-  const dateNumber = $("#date").value.trim();
+  const dateNumber = formatOrderDate($("#date").value.trim());
   const orderNumber = $("#numb").value.trim();
   const customer = $("#customer").value.trim();
   const notes = $("#notes").value.trim();
