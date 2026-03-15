@@ -111,13 +111,21 @@
   .history-card img{display:block;width:100%;aspect-ratio:4/3;object-fit:cover;background:#fff}
   .history-meta{padding:8px 10px;font-size:12px;color:var(--muted)}
   .history-empty{margin:0;color:var(--muted);font-size:14px}
-  .settings-list{display:grid;gap:12px}
-  .settings-item{border:1px solid var(--border);border-radius:12px;padding:12px;background:var(--control-bg)}
-  .settings-item h3{margin:0 0 8px;font-size:15px}
-  .settings-item p{margin:0;color:var(--muted);font-size:13px}
-  .settings-control{margin-top:10px}
-  .settings-inline{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
-  .settings-inline label{margin:0;font-size:14px;color:var(--text)}
+  .settings-list{display:grid;gap:2px;border:1px solid var(--border);border-radius:16px;background:var(--control-bg);overflow:hidden}
+  .settings-item{padding:14px 12px;border-bottom:1px solid var(--border);background:var(--control-bg)}
+  .settings-item:last-child{border-bottom:none}
+  .settings-row{display:flex;align-items:center;justify-content:space-between;gap:12px}
+  .settings-title{margin:0;font-size:15px;color:var(--text)}
+  .settings-subtext{margin:10px 0 0;color:var(--muted);font-size:13px}
+  .switch{position:relative;display:inline-block;width:46px;height:28px;flex-shrink:0}
+  .switch input{opacity:0;width:0;height:0}
+  .switch-slider{position:absolute;inset:0;border-radius:99px;background:#b6bfce;transition:background .2s ease;cursor:pointer}
+  .switch-slider::before{content:"";position:absolute;width:22px;height:22px;left:3px;top:3px;border-radius:50%;background:#fff;transition:transform .2s ease;box-shadow:0 1px 3px rgba(0,0,0,.25)}
+  .switch input:checked + .switch-slider{background:var(--accent)}
+  .switch input:checked + .switch-slider::before{transform:translateX(18px)}
+  .settings-input-wrap{margin-top:10px}
+  .settings-input-wrap input:disabled{opacity:.55;cursor:not-allowed}
+  .settings-reset{margin-top:14px}
   .history-lightbox{position:fixed;inset:0;background:rgba(0,0,0,.88);display:none;align-items:center;justify-content:center;padding:14px;z-index:1700;cursor:zoom-out}
   .history-lightbox.show{display:flex}
   .history-lightbox img{max-width:100%;max-height:100%;object-fit:contain;border-radius:8px}
@@ -269,8 +277,7 @@ th, td {padding: 8px 6px;white-space: nowrap;}
 <div class="wrap">
   <div class="card">
     <div class="header">
-      <h1>Заказ рольштор</h1>
-      <button class="btn secondary" id="themeToggle" type="button">🌙 Тёмная тема</button>
+      <h1 id="viewTitle">Заказ рольштор</h1>
     </div>
     <div id="orderView" class="tab-view active">
     <div class="grid">
@@ -427,42 +434,38 @@ th, td {padding: 8px 6px;white-space: nowrap;}
     <h2 style="margin:0 0 10px;font-size:18px;">Настройки</h2>
     <div class="settings-list">
       <section class="settings-item">
-        <h3>Тема интерфейса</h3>
-        <p>Выберите светлую или тёмную тему приложения.</p>
-        <div class="settings-control">
-          <select id="themeSelect" aria-label="Выбор темы">
-            <option value="light">Светлая</option>
-            <option value="dark">Тёмная</option>
-          </select>
+        <div class="settings-row">
+          <h3 class="settings-title">Тёмная тема интерфейса</h3>
+          <label class="switch" aria-label="Тёмная тема интерфейса">
+            <input id="themeSwitch" type="checkbox">
+            <span class="switch-slider"></span>
+          </label>
         </div>
       </section>
       <section class="settings-item">
-        <h3>Дата заказа</h3>
-        <p>Можно выставлять дату автоматически (сегодня) или вручную.</p>
-        <div class="settings-control">
-          <select id="dateModeSelect" aria-label="Режим даты">
-            <option value="auto">Автоматически</option>
-            <option value="manual">Вручную</option>
-          </select>
+        <div class="settings-row">
+          <h3 class="settings-title">Дату заказа выставлять автоматически</h3>
+          <label class="switch" aria-label="Дату заказа выставлять автоматически">
+            <input id="dateAutoSwitch" type="checkbox">
+            <span class="switch-slider"></span>
+          </label>
         </div>
       </section>
       <section class="settings-item">
-        <h3>Автозаполнение заказчика</h3>
-        <p>Сохраняет имя заказчика и подставляет его в новые заказы.</p>
-        <div class="settings-control settings-inline">
-          <label><input id="customerAutofill" type="checkbox"> Включить автозаполнение</label>
+        <div class="settings-row">
+          <h3 class="settings-title">Автозаполнение заказчика</h3>
+          <label class="switch" aria-label="Автозаполнение заказчика">
+            <input id="customerAutofill" type="checkbox">
+            <span class="switch-slider"></span>
+          </label>
         </div>
-        <div class="settings-control">
-          <input id="customerDefault" type="text" placeholder="Например: ИП 'Успешный'" aria-label="Заказчик по умолчанию">
-        </div>
-      </section>
-      <section class="settings-item">
-        <h3>Сброс</h3>
-        <p>Удаляет все пользовательские настройки и возвращает значения по умолчанию.</p>
-        <div class="settings-control">
-          <button class="btn secondary" type="button" id="resetSettingsBtn">Сбросить все настройки</button>
+        <div class="settings-input-wrap">
+          <input id="customerDefault" type="text" placeholder="Например: ИП 'Успешный'" aria-label="Заказчик по умолчанию" disabled>
         </div>
       </section>
+    </div>
+    <div class="settings-reset">
+      <button class="btn secondary" type="button" id="resetSettingsBtn">Сбросить все настройки</button>
     </div>
   </div>
   </div>
@@ -632,6 +635,10 @@ function setActiveView(viewName) {
   instructionsView?.classList.toggle("active", viewName === "instructions");
   historyView?.classList.toggle("active", viewName === "history");
   settingsView?.classList.toggle("active", viewName === "settings");
+
+  const title = document.getElementById("viewTitle");
+  if (!title) return;
+  title.textContent = viewName === "order" ? "Заказ рольштор" : "";
 }
 
 function setActiveNavButton(button) {
@@ -678,10 +685,9 @@ renderHistory();
 
 const THEME_KEY = "rolly-theme";
 const SETTINGS_KEY = "rolly-settings";
-const themeToggle = document.getElementById("themeToggle");
-const themeSelect = document.getElementById("themeSelect");
+const themeSwitch = document.getElementById("themeSwitch");
 const dateInput = document.getElementById("date");
-const dateModeSelect = document.getElementById("dateModeSelect");
+const dateAutoSwitch = document.getElementById("dateAutoSwitch");
 const customerInput = document.getElementById("customer");
 const customerAutofill = document.getElementById("customerAutofill");
 const customerDefault = document.getElementById("customerDefault");
@@ -689,7 +695,7 @@ const resetSettingsBtn = document.getElementById("resetSettingsBtn");
 
 const defaultSettings = {
   theme: "light",
-  dateMode: "auto",
+  dateMode: "manual",
   customerAutofillEnabled: false,
   defaultCustomer: ""
 };
@@ -709,7 +715,7 @@ function loadSettings() {
       ...defaultSettings,
       ...parsed,
       theme: parsed?.theme === "dark" ? "dark" : "light",
-      dateMode: parsed?.dateMode === "manual" ? "manual" : "auto",
+      dateMode: parsed?.dateMode === "auto" ? "auto" : "manual",
       customerAutofillEnabled: Boolean(parsed?.customerAutofillEnabled),
       defaultCustomer: typeof parsed?.defaultCustomer === "string" ? parsed.defaultCustomer : ""
     };
@@ -725,8 +731,7 @@ function saveSettings(settings) {
 function applyTheme(theme) {
   const normalizedTheme = theme === "dark" ? "dark" : "light";
   document.body.setAttribute("data-theme", normalizedTheme);
-  themeToggle.textContent = normalizedTheme === "dark" ? "☀️ Светлая тема" : "🌙 Тёмная тема";
-  if (themeSelect) themeSelect.value = normalizedTheme;
+  if (themeSwitch) themeSwitch.checked = normalizedTheme === "dark";
 }
 
 function applyDateMode(mode) {
@@ -737,40 +742,36 @@ function applyDateMode(mode) {
   if (normalizedMode === "auto") {
     dateInput.value = getTodayISODate();
   }
-  if (dateModeSelect) dateModeSelect.value = normalizedMode;
+  if (dateAutoSwitch) dateAutoSwitch.checked = normalizedMode === "auto";
 }
 
 function applyCustomerSettings(settings) {
   if (customerAutofill) customerAutofill.checked = settings.customerAutofillEnabled;
-  if (customerDefault) customerDefault.value = settings.defaultCustomer;
+  if (customerDefault) {
+    customerDefault.value = settings.defaultCustomer;
+    customerDefault.disabled = !settings.customerAutofillEnabled;
+  }
   if (customerInput && settings.customerAutofillEnabled && settings.defaultCustomer) {
     customerInput.value = settings.defaultCustomer;
   }
 }
 
 const savedSettings = loadSettings();
-applyTheme(savedSettings.theme || localStorage.getItem(THEME_KEY) || "light");
+const storedTheme = localStorage.getItem(THEME_KEY);
+const initialTheme = savedSettings.theme || (storedTheme === "dark" ? "dark" : "light");
+applyTheme(initialTheme);
 applyDateMode(savedSettings.dateMode);
 applyCustomerSettings(savedSettings);
 
-themeToggle.addEventListener("click", () => {
-  const currentTheme = document.body.getAttribute("data-theme") === "dark" ? "dark" : "light";
-  const nextTheme = currentTheme === "dark" ? "light" : "dark";
-  applyTheme(nextTheme);
-  localStorage.setItem(THEME_KEY, nextTheme);
-  const nextSettings = { ...loadSettings(), theme: nextTheme };
-  saveSettings(nextSettings);
-});
-
-themeSelect?.addEventListener("change", () => {
-  const nextTheme = themeSelect.value === "dark" ? "dark" : "light";
+themeSwitch?.addEventListener("change", () => {
+  const nextTheme = themeSwitch.checked ? "dark" : "light";
   applyTheme(nextTheme);
   localStorage.setItem(THEME_KEY, nextTheme);
   saveSettings({ ...loadSettings(), theme: nextTheme });
 });
 
-dateModeSelect?.addEventListener("change", () => {
-  const mode = dateModeSelect.value === "manual" ? "manual" : "auto";
+dateAutoSwitch?.addEventListener("change", () => {
+  const mode = dateAutoSwitch.checked ? "auto" : "manual";
   applyDateMode(mode);
   saveSettings({ ...loadSettings(), dateMode: mode });
 });
@@ -780,6 +781,7 @@ customerAutofill?.addEventListener("change", () => {
     ...loadSettings(),
     customerAutofillEnabled: customerAutofill.checked
   };
+  if (customerDefault) customerDefault.disabled = !nextSettings.customerAutofillEnabled;
   if (nextSettings.customerAutofillEnabled && nextSettings.defaultCustomer && customerInput) {
     customerInput.value = nextSettings.defaultCustomer;
   }
