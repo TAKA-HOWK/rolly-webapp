@@ -71,6 +71,7 @@
   .pill.active{border-color:#315aee}
   .pillr{padding:8px 12px;border-radius:999px;border:1px solid var(--pill-border);cursor:pointer;display:inline-block}
   .pillr.active{border-color:#315aee}
+  .pillr.disabled{opacity:.5;cursor:not-allowed;pointer-events:none}
   .btn{padding:10px 14px;border-radius:10px;border:none;cursor:pointer;font-weight:600}
   .btn.primary{background:linear-gradient(180deg,var(--accent),#2a7ee8);color:#fff}
   .btn.secondary{background:var(--btn-secondary-bg);color:var(--btn-secondary-text);border:1px solid var(--border)}
@@ -863,6 +864,28 @@ const systemOrder = [
   "Uni-2 E!", "us 38 Standart E!", "us 38 lux E!", "us 38 lux D/N E!", "us 38 Cassette E!", "us 38 Fabric E!", "us 38 Square E!", "us 45 E!"
 ];
 
+const systemsWithoutVgsh = new Set([
+  "mini", "mini d/n",
+  "mgII", "mgs", "mgs d/n",
+  "us 38 Standart", "us 38 lux", "us 38 lux D/N", "us 38 Cassette", "us 38 Fabric", "us 38 Square", "us 45",
+  "us 38 Standart E!", "us 38 lux E!", "us 38 lux D/N E!", "us 38 Cassette E!", "us 38 Fabric E!", "us 38 Square E!", "us 45 E!"
+]);
+
+function syncBasisAvailabilityForSystem(systemValue) {
+  const vgshPill = document.querySelector('#basis .pillr[data-val="ВГШ"]');
+  if (!vgshPill) return;
+
+  const shouldDisableVgsh = systemsWithoutVgsh.has(systemValue);
+  vgshPill.classList.toggle('disabled', shouldDisableVgsh);
+  vgshPill.setAttribute('aria-disabled', shouldDisableVgsh ? 'true' : 'false');
+
+  if (shouldDisableVgsh && vgshPill.classList.contains('active')) {
+    vgshPill.classList.remove('active');
+    const fallbackBasis = document.querySelector('#basis .pillr:not(.disabled)');
+    fallbackBasis?.classList.add('active');
+  }
+}
+
 
     // по чём размеры
 $("#basis").onclick=e=>{
@@ -994,6 +1017,7 @@ $("#clearBtn").onclick = async () => {
     $("#numb").value = "";
     $("#customer").value = settings.customerAutofillEnabled ? settings.defaultCustomer : "";
     $("#systemInput").value = "";
+    syncBasisAvailabilityForSystem("");
     $("#color").value = "";
     $("#width").value = "";
     $("#height").value = "";
@@ -1027,6 +1051,7 @@ $("#clearBtn").onclick = async () => {
     // Заполняем форму значениями из строки
     $("#systemInput").value = item.system;
     $(".dropdown-toggle").textContent = item.system;
+    syncBasisAvailabilityForSystem(item.system);
 
     $("#color").value = item.color;
     $("#width").value = item.width;
@@ -1288,7 +1313,10 @@ options.forEach(opt => {
     menu.style.display = 'none';
   // Подставляем в форму
       const systemInput = document.getElementById('systemInput');
-      if (systemInput) systemInput.value = opt.dataset.value;
+      if (systemInput) {
+        systemInput.value = opt.dataset.value;
+        syncBasisAvailabilityForSystem(opt.dataset.value);
+      }
   };
 });
 
