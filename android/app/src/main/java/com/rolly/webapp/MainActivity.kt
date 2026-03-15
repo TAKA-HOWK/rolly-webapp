@@ -8,12 +8,14 @@ import android.webkit.WebChromeClient
 import android.webkit.WebSettings
 import android.webkit.WebView
 import android.webkit.WebViewClient
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import java.io.File
 import java.io.FileOutputStream
 
 class MainActivity : AppCompatActivity() {
     private lateinit var webView: WebView
+    private var backPressedAt: Long = 0
 
     @SuppressLint("SetJavaScriptEnabled")
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -122,8 +124,15 @@ class MainActivity : AppCompatActivity() {
     override fun onBackPressed() {
         if (webView.canGoBack()) {
             webView.goBack()
-        } else {
+            return
+        }
+
+        val now = System.currentTimeMillis()
+        if (now - backPressedAt < 2000) {
             super.onBackPressed()
+        } else {
+            backPressedAt = now
+            Toast.makeText(this, "Нажмите назад ещё раз для выхода", Toast.LENGTH_SHORT).show()
         }
     }
 }
