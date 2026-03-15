@@ -21,6 +21,13 @@
     --btn-secondary-text:#1b2538;
     --dropdown-group-bg:#f1f5fd;
     --dropdown-hover:#e4ebfa;
+    --toast-bg:#ffffff;
+    --toast-border:#cfdaef;
+    --toast-shadow:0 12px 28px rgba(30,46,80,.15);
+    --toast-success:#1e9b62;
+    --toast-error:#c92a2a;
+    --toast-info:#2a7ee8;
+    --overlay:rgba(8,12,20,.4);
   }
   body[data-theme="dark"] {
     --bg:#0f1115;
@@ -38,6 +45,13 @@
     --btn-secondary-text:#e7ecf3;
     --dropdown-group-bg:#1e232c;
     --dropdown-hover:#2a2f3d;
+    --toast-bg:#171c26;
+    --toast-border:#303749;
+    --toast-shadow:0 14px 34px rgba(0,0,0,.45);
+    --toast-success:#43d494;
+    --toast-error:#ff7f7f;
+    --toast-info:#69b5ff;
+    --overlay:rgba(0,0,0,.58);
   }
   body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,Arial,sans-serif; overscroll-behavior-x: none;}
   body.loading{overflow:hidden}
@@ -77,6 +91,53 @@
 .group-options div:hover {background: var(--dropdown-hover);}
   .edit, .del {font-size: 18px;padding: 6px 10px;border: none;background: transparent;cursor: pointer;}
   .muted{color:var(--muted)}
+  .toast-viewport{
+    position:fixed;
+    right:14px;
+    top:14px;
+    width:min(360px,calc(100% - 28px));
+    display:grid;
+    gap:8px;
+    z-index:1400;
+    pointer-events:none;
+  }
+  .toast{
+    background:var(--toast-bg);
+    border:1px solid var(--toast-border);
+    border-radius:12px;
+    box-shadow:var(--toast-shadow);
+    color:var(--text);
+    display:grid;
+    grid-template-columns:auto 1fr auto;
+    align-items:start;
+    gap:10px;
+    padding:10px 12px;
+    pointer-events:auto;
+    transform:translateY(-8px);
+    opacity:0;
+    transition:opacity .2s ease,transform .2s ease;
+  }
+  .toast.show{opacity:1;transform:translateY(0)}
+  .toast__icon{font-size:18px;line-height:1.1;margin-top:1px}
+  .toast__close{border:none;background:transparent;color:var(--muted);cursor:pointer;font-size:18px;line-height:1;padding:2px}
+  .toast.success .toast__icon{color:var(--toast-success)}
+  .toast.error .toast__icon{color:var(--toast-error)}
+  .toast.info .toast__icon{color:var(--toast-info)}
+  .modal-overlay{
+    position:fixed;
+    inset:0;
+    background:var(--overlay);
+    display:none;
+    align-items:center;
+    justify-content:center;
+    padding:14px;
+    z-index:1500;
+  }
+  .modal-overlay.show{display:flex}
+  .modal-card{max-width:380px;width:100%;background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px;box-shadow:var(--toast-shadow)}
+  .modal-card h3{margin:0 0 10px;font-size:18px}
+  .modal-card p{margin:0 0 14px;color:var(--muted)}
+  .modal-actions{display:flex;justify-content:flex-end;gap:8px;flex-wrap:wrap}
   .bottom-dock{
     position:fixed;
     left:50%;
@@ -155,6 +216,17 @@ th, td {padding: 8px 6px;white-space: nowrap;}
 <div id="loadingScreen" aria-live="polite" aria-label="Экран загрузки">
   <div class="loading-box">
     <img src="loading.gif" alt="" />
+  </div>
+</div>
+<div id="toastViewport" class="toast-viewport" aria-live="polite" aria-atomic="true"></div>
+<div id="confirmModal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="confirmTitle" aria-describedby="confirmMessage">
+  <div class="modal-card">
+    <h3 id="confirmTitle">Подтверждение</h3>
+    <p id="confirmMessage"></p>
+    <div class="modal-actions">
+      <button class="btn secondary" id="confirmCancel" type="button">Отмена</button>
+      <button class="btn primary" id="confirmAccept" type="button">Очистить</button>
+    </div>
   </div>
 </div>
 <div class="wrap">
@@ -341,6 +413,61 @@ th, td {padding: 8px 6px;white-space: nowrap;}
 
 <script>
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
+function showToast(message, type = "info", timeout = 3200) {
+  const viewport = document.getElementById("toastViewport");
+  if (!viewport) return;
+
+  const icon = type === "error" ? "⚠" : type === "success" ? "✓" : "ℹ";
+  const toast = document.createElement("div");
+  toast.className = `toast ${type}`;
+  toast.innerHTML = `
+    <span class="toast__icon">${icon}</span>
+    <div>${message}</div>
+    <button type="button" class="toast__close" aria-label="Закрыть уведомление">×</button>
+  `;
+
+  viewport.appendChild(toast);
+  requestAnimationFrame(() => toast.classList.add("show"));
+
+  const removeToast = () => {
+    toast.classList.remove("show");
+    setTimeout(() => toast.remove(), 200);
+  };
+
+  toast.querySelector(".toast__close").onclick = removeToast;
+  setTimeout(removeToast, timeout);
+}
+
+function showConfirm(message, acceptLabel = "Подтвердить") {
+  const modal = document.getElementById("confirmModal");
+  const messageNode = document.getElementById("confirmMessage");
+  const acceptBtn = document.getElementById("confirmAccept");
+  const cancelBtn = document.getElementById("confirmCancel");
+
+  if (!modal || !messageNode || !acceptBtn || !cancelBtn) {
+    return Promise.resolve(confirm(message));
+  }
+
+  messageNode.textContent = message;
+  acceptBtn.textContent = acceptLabel;
+
+  return new Promise((resolve) => {
+    const close = (result) => {
+      modal.classList.remove("show");
+      acceptBtn.onclick = null;
+      cancelBtn.onclick = null;
+      modal.onclick = null;
+      resolve(result);
+    };
+
+    acceptBtn.onclick = () => close(true);
+    cancelBtn.onclick = () => close(false);
+    modal.onclick = (e) => {
+      if (e.target === modal) close(false);
+    };
+    modal.classList.add("show");
+  });
+}
 let rows=[];
 
 const THEME_KEY = "rolly-theme";
@@ -496,10 +623,10 @@ $("#sortSelect").addEventListener("change", () => {
   const side = getSide();
   const system = $("#systemInput").value;
 
-  if (!system) return alert("Выберите систему");
-  if (!color || !w || !h || !q) return alert("Заполните все поля");
-  if (!basis) return alert("Выберите, по чем размеры");
-  if (!side) return alert("Выберите сторону управления");
+  if (!system) return showToast("Выберите систему", "error");
+  if (!color || !w || !h || !q) return showToast("Заполните все поля", "error");
+  if (!basis) return showToast("Выберите, по чем размеры", "error");
+  if (!side) return showToast("Выберите сторону управления", "error");
 
      // Показать заказчика и номер заказа
 $("#dateNumberDisplay").textContent = $("#date").value.trim();
@@ -519,7 +646,7 @@ $("#orderInfo").style.display = "block";
      render();
 
  // Очистить всё
-$("#clearBtn").onclick = () => {
+$("#clearBtn").onclick = async () => {
   const hasTableData = rows.length > 0;
   const hasFormData = $("#date").value || $("#numb").value || $("#customer").value ||
                       $("#systemInput").value || $("#color").value ||
@@ -527,7 +654,7 @@ $("#clearBtn").onclick = () => {
 
   if (!hasTableData && !hasFormData) return; // ничего не заполнено
 
-  if (confirm("Очистить все данные заказа и таблицу?")) {
+  if (await showConfirm("Очистить все данные заказа и таблицу?", "Очистить")) {
     // Очистить таблицу
     rows = [];
     render();
@@ -664,7 +791,7 @@ async function tryAndroidSaveImage(dataUrl, filename) {
 function openImageFallback(dataUrl) {
   const w = window.open("", "_blank");
   if (!w) {
-    alert("Браузер заблокировал открытие изображения. Попробуйте удерживать картинку в блоке экспорта и выбрать «Сохранить».");
+    showToast("Браузер заблокировал открытие изображения. Попробуйте удерживать картинку в блоке экспорта и выбрать «Сохранить».", "error", 4200);
     return;
   }
   w.document.write(`<img src="${dataUrl}" style="max-width:100%;height:auto;display:block;margin:0 auto" />`);
@@ -727,7 +854,7 @@ function showInlineExportPanel(pages, files) {
   if (share) {
     share.onclick = async () => {
       const ok = await tryShareFiles(files);
-      if (!ok) alert("Не удалось открыть меню «Поделиться». Попробуйте кнопку «Скачать».");
+      if (!ok) showToast("Не удалось открыть меню «Поделиться». Попробуйте кнопку «Скачать».", "error");
     };
   }
 
@@ -738,7 +865,7 @@ function showInlineExportPanel(pages, files) {
 $("#saveJpeg").onclick = async () => {
 
   if (!rows.length) {
-    alert("Таблица пуста");
+    showToast("Таблица пуста", "error");
     return;
   }
 
@@ -862,7 +989,7 @@ $("#saveJpeg").onclick = async () => {
       const results = await Promise.all(pageArtifacts.map((p) => tryAndroidSaveImage(p.dataUrl, p.filename)));
       savedToAndroid = results.every(Boolean);
       if (!savedToAndroid) {
-        alert("Не удалось сохранить часть файлов в память телефона. Запускаю браузерное скачивание.");
+        showToast("Не удалось сохранить часть файлов в память телефона. Запускаю браузерное скачивание.", "error", 4200);
       }
     }
 
