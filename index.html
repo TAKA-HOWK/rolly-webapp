@@ -111,6 +111,13 @@
   .history-card img{display:block;width:100%;aspect-ratio:4/3;object-fit:cover;background:#fff}
   .history-meta{padding:8px 10px;font-size:12px;color:var(--muted)}
   .history-empty{margin:0;color:var(--muted);font-size:14px}
+  .settings-list{display:grid;gap:12px}
+  .settings-item{border:1px solid var(--border);border-radius:12px;padding:12px;background:var(--control-bg)}
+  .settings-item h3{margin:0 0 8px;font-size:15px}
+  .settings-item p{margin:0;color:var(--muted);font-size:13px}
+  .settings-control{margin-top:10px}
+  .settings-inline{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+  .settings-inline label{margin:0;font-size:14px;color:var(--text)}
   .history-lightbox{position:fixed;inset:0;background:rgba(0,0,0,.88);display:none;align-items:center;justify-content:center;padding:14px;z-index:1700;cursor:zoom-out}
   .history-lightbox.show{display:flex}
   .history-lightbox img{max-width:100%;max-height:100%;object-fit:contain;border-radius:8px}
@@ -416,6 +423,48 @@ th, td {padding: 8px 6px;white-space: nowrap;}
     <p id="historyEmpty" class="history-empty">История пустая. Сохраните заказ в JPEG, чтобы он появился здесь.</p>
     <div id="historyGrid" class="history-grid"></div>
   </div>
+  <div id="settingsView" class="tab-view" aria-label="Вкладка настроек">
+    <h2 style="margin:0 0 10px;font-size:18px;">Настройки</h2>
+    <div class="settings-list">
+      <section class="settings-item">
+        <h3>Тема интерфейса</h3>
+        <p>Выберите светлую или тёмную тему приложения.</p>
+        <div class="settings-control">
+          <select id="themeSelect" aria-label="Выбор темы">
+            <option value="light">Светлая</option>
+            <option value="dark">Тёмная</option>
+          </select>
+        </div>
+      </section>
+      <section class="settings-item">
+        <h3>Дата заказа</h3>
+        <p>Можно выставлять дату автоматически (сегодня) или вручную.</p>
+        <div class="settings-control">
+          <select id="dateModeSelect" aria-label="Режим даты">
+            <option value="auto">Автоматически</option>
+            <option value="manual">Вручную</option>
+          </select>
+        </div>
+      </section>
+      <section class="settings-item">
+        <h3>Автозаполнение заказчика</h3>
+        <p>Сохраняет имя заказчика и подставляет его в новые заказы.</p>
+        <div class="settings-control settings-inline">
+          <label><input id="customerAutofill" type="checkbox"> Включить автозаполнение</label>
+        </div>
+        <div class="settings-control">
+          <input id="customerDefault" type="text" placeholder="Например: ИП 'Успешный'" aria-label="Заказчик по умолчанию">
+        </div>
+      </section>
+      <section class="settings-item">
+        <h3>Сброс</h3>
+        <p>Удаляет все пользовательские настройки и возвращает значения по умолчанию.</p>
+        <div class="settings-control">
+          <button class="btn secondary" type="button" id="resetSettingsBtn">Сбросить все настройки</button>
+        </div>
+      </section>
+    </div>
+  </div>
   </div>
 </div>
 
@@ -529,6 +578,7 @@ const navButtons = $$(".bottom-dock button");
 const orderView = document.getElementById("orderView");
 const instructionsView = document.getElementById("instructionsView");
 const historyView = document.getElementById("historyView");
+const settingsView = document.getElementById("settingsView");
 const historyGrid = document.getElementById("historyGrid");
 const historyEmpty = document.getElementById("historyEmpty");
 const historyLightbox = document.getElementById("historyLightbox");
@@ -581,6 +631,7 @@ function setActiveView(viewName) {
   orderView?.classList.toggle("active", viewName === "order");
   instructionsView?.classList.toggle("active", viewName === "instructions");
   historyView?.classList.toggle("active", viewName === "history");
+  settingsView?.classList.toggle("active", viewName === "settings");
 }
 
 function setActiveNavButton(button) {
@@ -598,7 +649,8 @@ navButtons.forEach((button, index) => {
     const viewByButtonId = {
       navOrder: "order",
       navInstructions: "instructions",
-      navHistory: "history"
+      navHistory: "history",
+      navSettings: "settings"
     };
     setActiveView(viewByButtonId[button.id] || "order");
   });
@@ -625,22 +677,135 @@ document.getElementById("clearHistoryBtn")?.addEventListener("click", async () =
 renderHistory();
 
 const THEME_KEY = "rolly-theme";
+const SETTINGS_KEY = "rolly-settings";
 const themeToggle = document.getElementById("themeToggle");
+const themeSelect = document.getElementById("themeSelect");
+const dateInput = document.getElementById("date");
+const dateModeSelect = document.getElementById("dateModeSelect");
+const customerInput = document.getElementById("customer");
+const customerAutofill = document.getElementById("customerAutofill");
+const customerDefault = document.getElementById("customerDefault");
+const resetSettingsBtn = document.getElementById("resetSettingsBtn");
+
+const defaultSettings = {
+  theme: "light",
+  dateMode: "auto",
+  customerAutofillEnabled: false,
+  defaultCustomer: ""
+};
+
+function getTodayISODate() {
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = String(today.getMonth() + 1).padStart(2, "0");
+  const day = String(today.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function loadSettings() {
+  try {
+    const parsed = JSON.parse(localStorage.getItem(SETTINGS_KEY) || "{}");
+    return {
+      ...defaultSettings,
+      ...parsed,
+      theme: parsed?.theme === "dark" ? "dark" : "light",
+      dateMode: parsed?.dateMode === "manual" ? "manual" : "auto",
+      customerAutofillEnabled: Boolean(parsed?.customerAutofillEnabled),
+      defaultCustomer: typeof parsed?.defaultCustomer === "string" ? parsed.defaultCustomer : ""
+    };
+  } catch {
+    return { ...defaultSettings };
+  }
+}
+
+function saveSettings(settings) {
+  localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+}
 
 function applyTheme(theme) {
   const normalizedTheme = theme === "dark" ? "dark" : "light";
   document.body.setAttribute("data-theme", normalizedTheme);
   themeToggle.textContent = normalizedTheme === "dark" ? "☀️ Светлая тема" : "🌙 Тёмная тема";
+  if (themeSelect) themeSelect.value = normalizedTheme;
 }
 
-const savedTheme = localStorage.getItem(THEME_KEY) || "light";
-applyTheme(savedTheme);
+function applyDateMode(mode) {
+  const normalizedMode = mode === "manual" ? "manual" : "auto";
+  if (!dateInput) return;
+  dateInput.readOnly = normalizedMode === "auto";
+  dateInput.disabled = normalizedMode === "auto";
+  if (normalizedMode === "auto") {
+    dateInput.value = getTodayISODate();
+  }
+  if (dateModeSelect) dateModeSelect.value = normalizedMode;
+}
+
+function applyCustomerSettings(settings) {
+  if (customerAutofill) customerAutofill.checked = settings.customerAutofillEnabled;
+  if (customerDefault) customerDefault.value = settings.defaultCustomer;
+  if (customerInput && settings.customerAutofillEnabled && settings.defaultCustomer) {
+    customerInput.value = settings.defaultCustomer;
+  }
+}
+
+const savedSettings = loadSettings();
+applyTheme(savedSettings.theme || localStorage.getItem(THEME_KEY) || "light");
+applyDateMode(savedSettings.dateMode);
+applyCustomerSettings(savedSettings);
 
 themeToggle.addEventListener("click", () => {
   const currentTheme = document.body.getAttribute("data-theme") === "dark" ? "dark" : "light";
   const nextTheme = currentTheme === "dark" ? "light" : "dark";
   applyTheme(nextTheme);
   localStorage.setItem(THEME_KEY, nextTheme);
+  const nextSettings = { ...loadSettings(), theme: nextTheme };
+  saveSettings(nextSettings);
+});
+
+themeSelect?.addEventListener("change", () => {
+  const nextTheme = themeSelect.value === "dark" ? "dark" : "light";
+  applyTheme(nextTheme);
+  localStorage.setItem(THEME_KEY, nextTheme);
+  saveSettings({ ...loadSettings(), theme: nextTheme });
+});
+
+dateModeSelect?.addEventListener("change", () => {
+  const mode = dateModeSelect.value === "manual" ? "manual" : "auto";
+  applyDateMode(mode);
+  saveSettings({ ...loadSettings(), dateMode: mode });
+});
+
+customerAutofill?.addEventListener("change", () => {
+  const nextSettings = {
+    ...loadSettings(),
+    customerAutofillEnabled: customerAutofill.checked
+  };
+  if (nextSettings.customerAutofillEnabled && nextSettings.defaultCustomer && customerInput) {
+    customerInput.value = nextSettings.defaultCustomer;
+  }
+  saveSettings(nextSettings);
+});
+
+customerDefault?.addEventListener("input", () => {
+  const nextSettings = {
+    ...loadSettings(),
+    defaultCustomer: customerDefault.value.trim()
+  };
+  if (nextSettings.customerAutofillEnabled && customerInput) {
+    customerInput.value = nextSettings.defaultCustomer;
+  }
+  saveSettings(nextSettings);
+});
+
+resetSettingsBtn?.addEventListener("click", async () => {
+  if (!await showConfirm("Сбросить все настройки приложения?", "Сбросить")) return;
+  localStorage.removeItem(SETTINGS_KEY);
+  localStorage.setItem(THEME_KEY, defaultSettings.theme);
+  applyTheme(defaultSettings.theme);
+  applyDateMode(defaultSettings.dateMode);
+  if (customerInput) customerInput.value = "";
+  applyCustomerSettings(defaultSettings);
+  showToast("Настройки сброшены", "success");
 });
 
 document.body.classList.add("loading");
