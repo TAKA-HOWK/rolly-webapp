@@ -976,14 +976,16 @@ $("#clearBtn").onclick = async () => {
   if (!hasTableData && !hasFormData) return; // ничего не заполнено
 
   if (await showConfirm("Очистить все данные заказа и таблицу?", "Очистить")) {
+    const settings = loadSettings();
+
     // Очистить таблицу
     rows = [];
     render();
 
     // Очистить форму
-    $("#date").value = "";
+    $("#date").value = settings.dateMode === "auto" ? getTodayISODate() : "";
     $("#numb").value = "";
-    $("#customer").value = "";
+    $("#customer").value = settings.customerAutofillEnabled ? settings.defaultCustomer : "";
     $("#systemInput").value = "";
     $("#color").value = "";
     $("#width").value = "";
@@ -1239,6 +1241,8 @@ $("#saveJpeg").onclick = async () => {
   if (!savedToAndroid) {
     pageArtifacts.forEach((p) => tryAutoDownloadBlob(p.blob, p.filename));
   }
+
+  showToast(`Заказ сохранён в JPEG (${pageArtifacts.length} стр.)`, "success");
 };
 
 
