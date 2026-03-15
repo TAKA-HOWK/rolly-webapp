@@ -166,6 +166,13 @@
     justify-content:center;
     padding:20px 8px;
     cursor:pointer;
+    transition:background .2s ease,color .2s ease,border-color .2s ease,box-shadow .2s ease;
+  }
+  .bottom-dock button.active{
+    background:linear-gradient(180deg,var(--accent),#2a7ee8);
+    color:#fff;
+    border-color:transparent;
+    box-shadow:0 6px 16px rgba(42,126,232,.35);
   }
   .nav-icon{
     width:24px;
@@ -469,6 +476,22 @@ function showConfirm(message, acceptLabel = "Подтвердить") {
   });
 }
 let rows=[];
+
+const navButtons = $$(".bottom-dock button");
+
+function setActiveNavButton(button) {
+  navButtons.forEach((btn) => {
+    const isActive = btn === button;
+    btn.classList.toggle("active", isActive);
+    btn.setAttribute("aria-pressed", String(isActive));
+  });
+}
+
+navButtons.forEach((button, index) => {
+  button.setAttribute("aria-pressed", "false");
+  button.addEventListener("click", () => setActiveNavButton(button));
+  if (index === 0) setActiveNavButton(button);
+});
 
 const THEME_KEY = "rolly-theme";
 const themeToggle = document.getElementById("themeToggle");
