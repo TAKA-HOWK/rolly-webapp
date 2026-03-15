@@ -91,6 +91,20 @@
 .group-options div:hover {background: var(--dropdown-hover);}
   .edit, .del {font-size: 18px;padding: 6px 10px;border: none;background: transparent;cursor: pointer;}
   .muted{color:var(--muted)}
+  .tab-view{display:none}
+  .tab-view.active{display:block}
+  .instructions-grid{
+    display:grid;
+    grid-template-columns:repeat(3,minmax(0,1fr));
+    gap:10px;
+    margin-top:14px;
+  }
+  .instruction-btn{
+    width:100%;
+    min-height:56px;
+    text-align:center;
+    white-space:normal;
+  }
   .toast-viewport{
     position:fixed;
     right:14px;
@@ -242,6 +256,7 @@ th, td {padding: 8px 6px;white-space: nowrap;}
       <h1>Заказ рольштор</h1>
       <button class="btn secondary" id="themeToggle" type="button">🌙 Тёмная тема</button>
     </div>
+    <div id="orderView" class="tab-view active">
     <div class="grid">
       <div><label>Дата заказа:</label><input id="date" type="date" title="Укажите дату оформления заказа"></div>
        <div><label>Номер заказа:</label><input id="numb" type="number" title="Введите номер для отслеживания"></div>
@@ -373,10 +388,22 @@ th, td {padding: 8px 6px;white-space: nowrap;}
       <button class="btn secondary" id="clearBtn" title="Очистить таблицу и форму">Очистить</button>
     </div>
   </div>
+
+  <div id="instructionsView" class="tab-view" aria-label="Вкладка инструкции">
+    <h2 style="margin:0 0 10px;font-size:18px;">Инструкции</h2>
+    <div class="instructions-grid">
+      <button class="btn secondary instruction-btn" type="button">Как правильно сделать замер кассеты</button>
+      <button class="btn secondary instruction-btn" type="button">Как правильно сделать замер открытой системы</button>
+      <button class="btn secondary instruction-btn" type="button">Рабочие высоты тканей для Uni</button>
+      <button class="btn secondary instruction-btn" type="button">Как настраивать электрику</button>
+      <button class="btn secondary instruction-btn" type="button">Как переделать открытую систему из "стеновой" в "потолочную"</button>
+    </div>
+  </div>
+  </div>
 </div>
 
 <nav class="bottom-dock" aria-label="Быстрая навигация">
-  <button type="button" aria-label="Заказ" title="Заказ">
+  <button type="button" id="navOrder" aria-label="Заказ" title="Заказ">
     <span class="nav-icon" aria-hidden="true">
       <svg viewBox="0 0 24 24">
   <path d="M12 1C7 1 2.8 2.2 2.6 2.2S1 6.1 1 12s1.6 9.8 1.6 9.8S7 23 12 23s9.4-1.2 9.4-1.2S23 17.9 23 12 21.4 2.2 21.4 2.2 17 1 12 1z"/>
@@ -384,7 +411,7 @@ th, td {padding: 8px 6px;white-space: nowrap;}
 </svg>
     </span>
   </button>
-  <button type="button" aria-label="Инструкции" title="Инструкции">
+  <button type="button" id="navInstructions" aria-label="Инструкции" title="Инструкции">
     <span class="nav-icon" aria-hidden="true">
       <svg viewBox="0 0 24 24">
   <circle cx="12" cy="12" r="11"/>
@@ -393,7 +420,7 @@ th, td {padding: 8px 6px;white-space: nowrap;}
 </svg>
     </span>
   </button>
-  <button type="button" aria-label="История" title="История">
+  <button type="button" id="navHistory" aria-label="История" title="История">
     <span class="nav-icon" aria-hidden="true">
       <svg viewBox="0 0 24 24">
   <path d="M12 2a10 10 0 1 1-9.7 12"/>
@@ -402,7 +429,7 @@ th, td {padding: 8px 6px;white-space: nowrap;}
 </svg>
     </span>
   </button>
-  <button type="button" aria-label="Настройки" title="Настройки">
+  <button type="button" id="navSettings" aria-label="Настройки" title="Настройки">
     <span class="nav-icon" aria-hidden="true">
       <svg viewBox="0 0 24 24">
   <line x1="1" y1="6" x2="23" y2="6"/>
@@ -478,6 +505,14 @@ function showConfirm(message, acceptLabel = "Подтвердить") {
 let rows=[];
 
 const navButtons = $$(".bottom-dock button");
+const orderView = document.getElementById("orderView");
+const instructionsView = document.getElementById("instructionsView");
+
+function setActiveView(viewName) {
+  const showInstructions = viewName === "instructions";
+  orderView?.classList.toggle("active", !showInstructions);
+  instructionsView?.classList.toggle("active", showInstructions);
+}
 
 function setActiveNavButton(button) {
   navButtons.forEach((btn) => {
@@ -489,8 +524,14 @@ function setActiveNavButton(button) {
 
 navButtons.forEach((button, index) => {
   button.setAttribute("aria-pressed", "false");
-  button.addEventListener("click", () => setActiveNavButton(button));
-  if (index === 0) setActiveNavButton(button);
+  button.addEventListener("click", () => {
+    setActiveNavButton(button);
+    setActiveView(button.id === "navInstructions" ? "instructions" : "order");
+  });
+  if (index === 0) {
+    setActiveNavButton(button);
+    setActiveView("order");
+  }
 });
 
 const THEME_KEY = "rolly-theme";
