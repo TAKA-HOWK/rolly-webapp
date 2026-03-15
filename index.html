@@ -105,6 +105,15 @@
     text-align:center;
     white-space:normal;
   }
+  .history-header{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px}
+  .history-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:10px}
+  .history-card{border:1px solid var(--border);border-radius:12px;overflow:hidden;background:var(--control-bg);cursor:pointer}
+  .history-card img{display:block;width:100%;aspect-ratio:4/3;object-fit:cover;background:#fff}
+  .history-meta{padding:8px 10px;font-size:12px;color:var(--muted)}
+  .history-empty{margin:0;color:var(--muted);font-size:14px}
+  .history-lightbox{position:fixed;inset:0;background:rgba(0,0,0,.88);display:none;align-items:center;justify-content:center;padding:14px;z-index:1700;cursor:zoom-out}
+  .history-lightbox.show{display:flex}
+  .history-lightbox img{max-width:100%;max-height:100%;object-fit:contain;border-radius:8px}
   .toast-viewport{
     position:fixed;
     right:14px;
@@ -399,7 +408,19 @@ th, td {padding: 8px 6px;white-space: nowrap;}
       <button class="btn secondary instruction-btn" type="button">Как переделать открытую систему из "стеновой" в "потолочную"</button>
     </div>
   </div>
+  <div id="historyView" class="tab-view" aria-label="Вкладка истории">
+    <div class="history-header">
+      <h2 style="margin:0;font-size:18px;">История</h2>
+      <button class="btn secondary" type="button" id="clearHistoryBtn">Очистить историю</button>
+    </div>
+    <p id="historyEmpty" class="history-empty">История пустая. Сохраните заказ в JPEG, чтобы он появился здесь.</p>
+    <div id="historyGrid" class="history-grid"></div>
   </div>
+  </div>
+</div>
+
+<div id="historyLightbox" class="history-lightbox" aria-label="Просмотр изображения">
+  <img id="historyFullscreenImage" src="" alt="Заказ в полном размере">
 </div>
 
 <nav class="bottom-dock" aria-label="Быстрая навигация">
@@ -507,11 +528,59 @@ let rows=[];
 const navButtons = $$(".bottom-dock button");
 const orderView = document.getElementById("orderView");
 const instructionsView = document.getElementById("instructionsView");
+const historyView = document.getElementById("historyView");
+const historyGrid = document.getElementById("historyGrid");
+const historyEmpty = document.getElementById("historyEmpty");
+const historyLightbox = document.getElementById("historyLightbox");
+const historyFullscreenImage = document.getElementById("historyFullscreenImage");
+const HISTORY_KEY = "rolly-order-history";
+
+function getHistoryItems() {
+  try {
+    const parsed = JSON.parse(localStorage.getItem(HISTORY_KEY) || "[]");
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveHistoryItems(items) {
+  localStorage.setItem(HISTORY_KEY, JSON.stringify(items));
+}
+
+function toggleHistoryLightbox(dataUrl) {
+  const isVisible = historyLightbox?.classList.contains("show");
+  if (isVisible && historyFullscreenImage?.src === dataUrl) {
+    historyLightbox?.classList.remove("show");
+    return;
+  }
+  if (historyFullscreenImage) historyFullscreenImage.src = dataUrl;
+  historyLightbox?.classList.add("show");
+}
+
+function renderHistory() {
+  if (!historyGrid || !historyEmpty) return;
+  const items = getHistoryItems();
+  historyGrid.innerHTML = "";
+  historyEmpty.style.display = items.length ? "none" : "block";
+
+  items.forEach((item) => {
+    const card = document.createElement("button");
+    card.type = "button";
+    card.className = "history-card";
+    card.innerHTML = `
+      <img src="${item.dataUrl}" alt="${item.filename}">
+      <div class="history-meta">${item.savedAt}</div>
+    `;
+    card.addEventListener("click", () => toggleHistoryLightbox(item.dataUrl));
+    historyGrid.appendChild(card);
+  });
+}
 
 function setActiveView(viewName) {
-  const showInstructions = viewName === "instructions";
-  orderView?.classList.toggle("active", !showInstructions);
-  instructionsView?.classList.toggle("active", showInstructions);
+  orderView?.classList.toggle("active", viewName === "order");
+  instructionsView?.classList.toggle("active", viewName === "instructions");
+  historyView?.classList.toggle("active", viewName === "history");
 }
 
 function setActiveNavButton(button) {
@@ -526,13 +595,34 @@ navButtons.forEach((button, index) => {
   button.setAttribute("aria-pressed", "false");
   button.addEventListener("click", () => {
     setActiveNavButton(button);
-    setActiveView(button.id === "navInstructions" ? "instructions" : "order");
+    const viewByButtonId = {
+      navOrder: "order",
+      navInstructions: "instructions",
+      navHistory: "history"
+    };
+    setActiveView(viewByButtonId[button.id] || "order");
   });
   if (index === 0) {
     setActiveNavButton(button);
     setActiveView("order");
   }
 });
+
+historyLightbox?.addEventListener("click", () => {
+  historyLightbox.classList.remove("show");
+});
+
+document.getElementById("clearHistoryBtn")?.addEventListener("click", async () => {
+  const items = getHistoryItems();
+  if (!items.length) return;
+  if (await showConfirm("Очистить историю JPEG заказов?", "Очистить")) {
+    saveHistoryItems([]);
+    renderHistory();
+    showToast("История очищена", "success");
+  }
+});
+
+renderHistory();
 
 const THEME_KEY = "rolly-theme";
 const themeToggle = document.getElementById("themeToggle");
@@ -1046,6 +1136,19 @@ $("#saveJpeg").onclick = async () => {
     pageArtifacts.push({ filename, blob, dataUrl });
     files.push(file);
   }
+
+  const savedAt = new Date().toLocaleString("ru-RU");
+  const historyItems = getHistoryItems();
+  pageArtifacts.forEach((artifact) => {
+    historyItems.unshift({
+      filename: artifact.filename,
+      dataUrl: artifact.dataUrl,
+      savedAt
+    });
+  });
+  saveHistoryItems(historyItems);
+  renderHistory();
+
   const shared = await tryShareFiles(files);
   if (!shared) {
   let savedToAndroid = false;
