@@ -94,18 +94,33 @@
   .muted{color:var(--muted)}
   .tab-view{display:none}
   .tab-view.active{display:block}
-  .instructions-grid{
-    display:grid;
-    grid-template-columns:repeat(3,minmax(0,1fr));
-    gap:10px;
-    margin-top:14px;
-  }
-  .instruction-btn{
-    width:100%;
-    min-height:56px;
-    text-align:center;
-    white-space:normal;
-  }
+  .instructions-panel{display:grid;gap:14px;margin-top:14px}
+  .instructions-toolbar{display:grid;gap:10px}
+  .instructions-search{position:relative}
+  .instructions-search input{padding-left:40px}
+  .instructions-search-icon{position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--muted);pointer-events:none}
+  .instructions-filters{display:flex;flex-wrap:wrap;gap:8px}
+  .instruction-filter{border:1px solid var(--border);background:var(--control-bg);color:var(--text);border-radius:999px;padding:9px 14px;cursor:pointer;font-weight:600}
+  .instruction-filter.active{background:var(--btn-secondary-bg);border-color:var(--accent);color:var(--accent)}
+  .instructions-summary{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+  .instructions-tip{border:1px solid var(--border);border-radius:14px;padding:14px;background:linear-gradient(180deg,var(--btn-secondary-bg),var(--card))}
+  .instructions-tip h3{margin:0 0 8px;font-size:15px}
+  .instructions-tip p{margin:0;color:var(--muted);font-size:14px;line-height:1.45}
+  .instructions-list{display:grid;gap:10px}
+  .instruction-card{border:1px solid var(--border);border-radius:14px;background:var(--card);overflow:hidden}
+  .instruction-card[hidden]{display:none}
+  .instruction-card summary{list-style:none;display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:14px;cursor:pointer}
+  .instruction-card summary::-webkit-details-marker{display:none}
+  .instruction-card summary::after{content:"+";font-size:22px;line-height:1;color:var(--muted);margin-top:2px}
+  .instruction-card[open] summary::after{content:"−"}
+  .instruction-card h3{margin:0 0 4px;font-size:16px}
+  .instruction-card p{margin:0;color:var(--muted);font-size:14px;line-height:1.45}
+  .instruction-card-body{padding:0 14px 14px;border-top:1px solid var(--border);display:grid;gap:12px}
+  .instruction-meta{display:flex;flex-wrap:wrap;gap:8px;padding-top:12px}
+  .instruction-badge{display:inline-flex;align-items:center;padding:6px 10px;border-radius:999px;background:var(--btn-secondary-bg);border:1px solid var(--border);font-size:12px;font-weight:700;color:var(--header-text)}
+  .instruction-steps,.instruction-checklist{margin:0;padding-left:18px;display:grid;gap:6px;color:var(--text);font-size:14px;line-height:1.45}
+  .instruction-note{margin:0;padding:10px 12px;border-radius:12px;background:var(--btn-secondary-bg);color:var(--text);font-size:14px;line-height:1.45}
+  .instructions-empty{margin:0;padding:14px;border:1px dashed var(--border);border-radius:14px;color:var(--muted);font-size:14px;text-align:center}
   .history-header{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px}
   .history-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:10px}
   .history-card{border:1px solid var(--border);border-radius:12px;overflow:hidden;background:var(--control-bg);cursor:pointer}
@@ -254,6 +269,9 @@ th, td {padding: 8px 6px;white-space: nowrap;}
 #notes {font-size: 14px;}
 .bottom-dock{bottom:0;width:calc(100% - 12px);padding:6px;gap:6px}
 .bottom-dock button{font-size:13px;padding:30px 4px}
+.instructions-summary{grid-template-columns:1fr;}
+.instruction-card summary{padding:12px;}
+.instruction-card-body{padding:0 12px 12px;}
 }
 
 </style>
@@ -413,14 +431,152 @@ th, td {padding: 8px 6px;white-space: nowrap;}
     </div>
   </div>
 
-  <div id="instructionsView" class="tab-view" aria-label="Вкладка инструкции">
-    <h2 style="margin:0 0 10px;font-size:18px;">Инструкции</h2>
-    <div class="instructions-grid">
-      <button class="btn secondary instruction-btn" type="button">Как правильно сделать замер кассеты</button>
-      <button class="btn secondary instruction-btn" type="button">Как правильно сделать замер открытой системы</button>
-      <button class="btn secondary instruction-btn" type="button">Рабочие высоты тканей для Uni</button>
-      <button class="btn secondary instruction-btn" type="button">Как настраивать электрику</button>
-      <button class="btn secondary instruction-btn" type="button">Как переделать открытую систему из "стеновой" в "потолочную"</button>
+  <div id="instructionsView" class="tab-view" aria-label="Вкладка справка">
+    <div class="history-header">
+      <div>
+        <h2 style="margin:0;font-size:18px;">Справка</h2>
+        <p class="history-empty" style="margin-top:6px;">Быстрый доступ к частым вопросам по замеру, тканям и монтажу.</p>
+      </div>
+      <button class="btn secondary" type="button" id="expandInstructionsBtn">Развернуть всё</button>
+    </div>
+    <div class="instructions-panel">
+      <div class="instructions-toolbar">
+        <label class="instructions-search">
+          <span class="instructions-search-icon" aria-hidden="true">🔎</span>
+          <input id="instructionsSearch" type="search" placeholder="Например: кассета, электрика, Uni" aria-label="Поиск по справке">
+        </label>
+        <div class="instructions-filters" id="instructionFilters" aria-label="Фильтры справки">
+          <button class="instruction-filter active" type="button" data-filter="all">Все</button>
+          <button class="instruction-filter" type="button" data-filter="measurement">Замер</button>
+          <button class="instruction-filter" type="button" data-filter="mounting">Монтаж</button>
+          <button class="instruction-filter" type="button" data-filter="fabric">Ткани</button>
+          <button class="instruction-filter" type="button" data-filter="electric">Электрика</button>
+        </div>
+      </div>
+
+      <div class="instructions-summary">
+        <section class="instructions-tip">
+          <h3>Что обычно ищут</h3>
+          <p>Замер кассеты, перевод крепления, рабочие высоты тканей и базовая настройка электрики теперь собраны в одном месте.</p>
+        </section>
+        <section class="instructions-tip">
+          <h3>Как пользоваться</h3>
+          <p>Используйте поиск по ключевым словам или фильтры по теме, затем откройте нужную карточку — шаги и заметки будут внутри.</p>
+        </section>
+      </div>
+
+      <div class="instructions-list" id="instructionsList">
+        <details class="instruction-card" data-category="measurement" data-search="кассета замер направляющие ширина высота короб">
+          <summary>
+            <div>
+              <h3>Как правильно сделать замер кассеты</h3>
+              <p>Короткая памятка, чтобы не ошибиться с шириной, высотой и местом крепления.</p>
+            </div>
+          </summary>
+          <div class="instruction-card-body">
+            <div class="instruction-meta">
+              <span class="instruction-badge">Замер</span>
+              <span class="instruction-badge">Кассетная система</span>
+            </div>
+            <ol class="instruction-steps">
+              <li>Проверьте тип створки и убедитесь, что ручка и штапик не мешают кассете.</li>
+              <li>Замерьте ширину по внешним краям штапика в верхней части створки.</li>
+              <li>Высоту снимайте от верхней точки штапика до нижней, без учёта резинового уплотнителя.</li>
+              <li>Если есть сомнение по глубине, отдельно зафиксируйте выступающие элементы рядом с коробом.</li>
+            </ol>
+            <p class="instruction-note">Совет: сразу отмечайте, где будет управление — слева или справа, чтобы не возвращаться к заказу позже.</p>
+          </div>
+        </details>
+
+        <details class="instruction-card" data-category="measurement" data-search="открытая система замер вал цепь кронштейн ширина высота">
+          <summary>
+            <div>
+              <h3>Как правильно сделать замер открытой системы</h3>
+              <p>Подходит для случаев, когда ткань и вал остаются на виду.</p>
+            </div>
+          </summary>
+          <div class="instruction-card-body">
+            <div class="instruction-meta">
+              <span class="instruction-badge">Замер</span>
+              <span class="instruction-badge">Открытая система</span>
+            </div>
+            <ul class="instruction-checklist">
+              <li>Определите, где крепится изделие: створка, проём, стена или потолок.</li>
+              <li>Для створки ориентируйтесь на полезную ширину стекла с запасом под перекрытие.</li>
+              <li>Для проёма закладывайте запас по ширине и высоте, чтобы ткань перекрывала световой зазор.</li>
+              <li>Проверьте, не упирается ли вал в откосы, ручки и декоративные элементы.</li>
+            </ul>
+            <p class="instruction-note">Важно: отдельно фиксируйте габарит изделия и отдельно — ширину ткани, если это критично для монтажа.</p>
+          </div>
+        </details>
+
+        <details class="instruction-card" data-category="fabric" data-search="uni ткани рабочие высоты высота рулон ограничение">
+          <summary>
+            <div>
+              <h3>Рабочие высоты тканей для Uni</h3>
+              <p>Напоминание, когда нужно быстро проверить, подходит ли ткань под высоту изделия.</p>
+            </div>
+          </summary>
+          <div class="instruction-card-body">
+            <div class="instruction-meta">
+              <span class="instruction-badge">Ткани</span>
+              <span class="instruction-badge">Uni</span>
+            </div>
+            <ol class="instruction-steps">
+              <li>Проверьте рабочую высоту ткани перед расчётом, особенно для высоких створок.</li>
+              <li>Сравните требуемую высоту изделия с паспортной высотой конкретной ткани.</li>
+              <li>Если высота на границе допустимого значения, лучше сразу подобрать альтернативу.</li>
+            </ol>
+            <p class="instruction-note">Подсказка: если ткань ограничена по высоте, оставьте это в примечании к заказу, чтобы не потерять при передаче в работу.</p>
+          </div>
+        </details>
+
+        <details class="instruction-card" data-category="electric" data-search="электрика мотор настройка концевики пульт питание">
+          <summary>
+            <div>
+              <h3>Как настраивать электрику</h3>
+              <p>Базовая последовательность для первого запуска и проверки работы привода.</p>
+            </div>
+          </summary>
+          <div class="instruction-card-body">
+            <div class="instruction-meta">
+              <span class="instruction-badge">Электрика</span>
+              <span class="instruction-badge">Пуск и проверка</span>
+            </div>
+            <ul class="instruction-checklist">
+              <li>Проверьте питание, полярность и доступность точки подключения до монтажа.</li>
+              <li>Сначала свяжите мотор с пультом или кнопкой управления, затем выставляйте крайние положения.</li>
+              <li>После настройки обязательно сделайте полный цикл вверх/вниз и убедитесь, что ткань идёт ровно.</li>
+              <li>Если направление движения перепутано, измените его до финальной фиксации концевиков.</li>
+            </ul>
+            <p class="instruction-note">Важно: любые финальные значения крайних положений лучше записывать сразу после настройки.</p>
+          </div>
+        </details>
+
+        <details class="instruction-card" data-category="mounting" data-search="стеновая потолочная переделать открытую систему крепление кронштейн">
+          <summary>
+            <div>
+              <h3>Как переделать открытую систему из стеновой в потолочную</h3>
+              <p>Порядок действий, если на объекте меняется тип крепления.</p>
+            </div>
+          </summary>
+          <div class="instruction-card-body">
+            <div class="instruction-meta">
+              <span class="instruction-badge">Монтаж</span>
+              <span class="instruction-badge">Переход крепления</span>
+            </div>
+            <ol class="instruction-steps">
+              <li>Проверьте, хватает ли отступа от потолка для свободного хода ткани и вала.</li>
+              <li>Замените или переверните кронштейны в соответствии с типом системы.</li>
+              <li>Пересоберите крепёж так, чтобы ось вала оставалась параллельной линии потолка.</li>
+              <li>После установки проверьте перекрытие проёма и отсутствие касаний по всей высоте.</li>
+            </ol>
+            <p class="instruction-note">Совет: если меняется тип крепления, полезно сразу обновить примечание в заказе и фото в истории.</p>
+          </div>
+        </details>
+      </div>
+
+      <p id="instructionsEmpty" class="instructions-empty" hidden>Ничего не найдено. Попробуйте другой запрос или переключите фильтр.</p>
     </div>
   </div>
   <div id="historyView" class="tab-view" aria-label="Вкладка истории">
@@ -485,7 +641,7 @@ th, td {padding: 8px 6px;white-space: nowrap;}
 </svg>
     </span>
   </button>
-  <button type="button" id="navInstructions" aria-label="Инструкции" title="Инструкции">
+  <button type="button" id="navInstructions" aria-label="Справка" title="Справка">
     <span class="nav-icon" aria-hidden="true">
       <svg viewBox="0 0 24 24">
   <circle cx="12" cy="12" r="11"/>
@@ -590,6 +746,11 @@ const orderView = document.getElementById("orderView");
 const instructionsView = document.getElementById("instructionsView");
 const historyView = document.getElementById("historyView");
 const settingsView = document.getElementById("settingsView");
+const instructionsSearch = document.getElementById("instructionsSearch");
+const instructionFilters = $$("#instructionFilters .instruction-filter");
+const instructionCards = $$("#instructionsList .instruction-card");
+const instructionsEmpty = document.getElementById("instructionsEmpty");
+const expandInstructionsBtn = document.getElementById("expandInstructionsBtn");
 const historyGrid = document.getElementById("historyGrid");
 const historyEmpty = document.getElementById("historyEmpty");
 const historyLightbox = document.getElementById("historyLightbox");
@@ -638,6 +799,31 @@ function renderHistory() {
   });
 }
 
+function filterInstructions() {
+  const query = (instructionsSearch?.value || "").trim().toLowerCase();
+  const activeFilter = instructionFilters.find((btn) => btn.classList.contains("active"))?.dataset.filter || "all";
+  let visibleCount = 0;
+
+  instructionCards.forEach((card) => {
+    const category = card.dataset.category || "";
+    const haystack = `${card.dataset.search || ""} ${card.textContent || ""}`.toLowerCase();
+    const matchesFilter = activeFilter === "all" || category === activeFilter;
+    const matchesQuery = !query || haystack.includes(query);
+    const isVisible = matchesFilter && matchesQuery;
+    card.hidden = !isVisible;
+    if (!isVisible) card.open = false;
+    if (isVisible) visibleCount += 1;
+  });
+
+  if (instructionsEmpty) instructionsEmpty.hidden = visibleCount !== 0;
+  if (expandInstructionsBtn) {
+    expandInstructionsBtn.disabled = visibleCount === 0;
+    expandInstructionsBtn.textContent = visibleCount && instructionCards.some((card) => !card.hidden && !card.open)
+      ? "Развернуть всё"
+      : "Свернуть всё";
+  }
+}
+
 function setActiveView(viewName) {
   orderView?.classList.toggle("active", viewName === "order");
   instructionsView?.classList.toggle("active", viewName === "instructions");
@@ -674,6 +860,39 @@ navButtons.forEach((button, index) => {
     setActiveView("order");
   }
 });
+
+instructionFilters.forEach((button) => {
+  button.addEventListener("click", () => {
+    instructionFilters.forEach((btn) => btn.classList.toggle("active", btn === button));
+    filterInstructions();
+  });
+});
+
+instructionsSearch?.addEventListener("input", filterInstructions);
+
+instructionCards.forEach((card) => {
+  card.addEventListener("toggle", () => {
+    if (!card.open) {
+      filterInstructions();
+      return;
+    }
+    instructionCards.forEach((otherCard) => {
+      if (otherCard !== card && !otherCard.hidden) otherCard.open = false;
+    });
+    filterInstructions();
+  });
+});
+
+expandInstructionsBtn?.addEventListener("click", () => {
+  const hiddenCards = instructionCards.filter((card) => !card.hidden);
+  const shouldOpen = hiddenCards.some((card) => !card.open);
+  hiddenCards.forEach((card) => {
+    card.open = shouldOpen;
+  });
+  filterInstructions();
+});
+
+filterInstructions();
 
 historyLightbox?.addEventListener("click", () => {
   historyLightbox.classList.remove("show");
