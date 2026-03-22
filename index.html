@@ -1110,8 +1110,6 @@ document.getElementById("clearHistoryBtn")?.addEventListener("click", async () =
   }
 });
 
-renderHistory();
-
 const THEME_KEY = "rolly-theme";
 const SETTINGS_KEY = "rolly-settings";
 const themeSwitch = document.getElementById("themeSwitch");
@@ -1199,6 +1197,7 @@ applyTheme(initialTheme);
 applyDateMode(savedSettings.dateMode);
 applyCustomerSettings(savedSettings);
 applyHistorySettings(savedSettings);
+renderHistory();
 
 themeSwitch?.addEventListener("change", () => {
   const nextTheme = themeSwitch.checked ? "dark" : "light";
