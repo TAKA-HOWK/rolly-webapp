@@ -96,9 +96,9 @@
   .tab-view.active{display:block}
   .instructions-panel{display:grid;gap:14px;margin-top:14px}
   .instructions-toolbar{display:grid;gap:10px}
-  .instructions-search{position:relative}
-  .instructions-search input{padding-left:40px}
-  .instructions-search-icon{position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--muted);pointer-events:none}
+  .instructions-form{display:grid;gap:10px;padding:14px;border:1px solid var(--border);border-radius:14px;background:linear-gradient(180deg,var(--btn-secondary-bg),var(--card))}
+  .instructions-form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+  .instructions-form .btn{justify-self:start}
   .instructions-filters{display:flex;flex-wrap:wrap;gap:8px}
   .instruction-filter{border:1px solid var(--border);background:var(--control-bg);color:var(--text);border-radius:999px;padding:9px 14px;cursor:pointer;font-weight:600}
   .instruction-filter.active{background:var(--btn-secondary-bg);border-color:var(--accent);color:var(--accent)}
@@ -113,6 +113,10 @@
   .instruction-card summary::-webkit-details-marker{display:none}
   .instruction-card summary::after{content:"+";font-size:22px;line-height:1;color:var(--muted);margin-top:2px}
   .instruction-card[open] summary::after{content:"−"}
+  .instruction-card.custom summary{padding-right:10px}
+  .instruction-card-title{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;width:100%}
+  .instruction-card-title > div{min-width:0}
+  .instruction-remove{border:1px solid var(--border);background:var(--control-bg);color:var(--danger);border-radius:10px;padding:8px 10px;font-size:13px;font-weight:700;cursor:pointer;flex-shrink:0}
   .instruction-card h3{margin:0 0 4px;font-size:16px}
   .instruction-card p{margin:0;color:var(--muted);font-size:14px;line-height:1.45}
   .instruction-card-body{padding:0 14px 14px;border-top:1px solid var(--border);display:grid;gap:12px}
@@ -270,6 +274,7 @@ th, td {padding: 8px 6px;white-space: nowrap;}
 .bottom-dock{bottom:0;width:calc(100% - 12px);padding:6px;gap:6px}
 .bottom-dock button{font-size:13px;padding:30px 4px}
 .instructions-summary{grid-template-columns:1fr;}
+.instructions-form-grid{grid-template-columns:1fr;}
 .instruction-card summary{padding:12px;}
 .instruction-card-body{padding:0 12px 12px;}
 }
@@ -440,16 +445,40 @@ th, td {padding: 8px 6px;white-space: nowrap;}
     </div>
     <div class="instructions-panel">
       <div class="instructions-toolbar">
-        <label class="instructions-search">
-          <span class="instructions-search-icon" aria-hidden="true">🔎</span>
-          <input id="instructionsSearch" type="search" placeholder="Например: кассета, электрика, Uni" aria-label="Поиск по справке">
-        </label>
+        <form class="instructions-form" id="instructionForm">
+          <div class="instructions-form-grid">
+            <div>
+              <label for="instructionTitle">Заголовок инструкции</label>
+              <input id="instructionTitle" type="text" placeholder="Например: Как упаковать заказ перед доставкой" maxlength="120" required>
+            </div>
+            <div>
+              <label for="instructionCategory">Категория</label>
+              <select id="instructionCategory" required>
+                <option value="measurement">Замер</option>
+                <option value="mounting">Монтаж</option>
+                <option value="fabric">Ткани</option>
+                <option value="electric">Электрика</option>
+                <option value="custom">Другое</option>
+              </select>
+            </div>
+          </div>
+          <div>
+            <label for="instructionDescription">Короткое описание</label>
+            <input id="instructionDescription" type="text" placeholder="Что это за инструкция и когда пригодится" maxlength="180" required>
+          </div>
+          <div>
+            <label for="instructionContent">Текст инструкции</label>
+            <textarea id="instructionContent" rows="5" placeholder="Каждый новый пункт пишите с новой строки" required></textarea>
+          </div>
+          <button class="btn secondary" type="submit">Добавить инструкцию</button>
+        </form>
         <div class="instructions-filters" id="instructionFilters" aria-label="Фильтры справки">
           <button class="instruction-filter active" type="button" data-filter="all">Все</button>
           <button class="instruction-filter" type="button" data-filter="measurement">Замер</button>
           <button class="instruction-filter" type="button" data-filter="mounting">Монтаж</button>
           <button class="instruction-filter" type="button" data-filter="fabric">Ткани</button>
           <button class="instruction-filter" type="button" data-filter="electric">Электрика</button>
+          <button class="instruction-filter" type="button" data-filter="custom">Другое</button>
         </div>
       </div>
 
@@ -585,7 +614,7 @@ th, td {padding: 8px 6px;white-space: nowrap;}
         </details>
       </div>
 
-      <p id="instructionsEmpty" class="instructions-empty" hidden>Ничего не найдено. Попробуйте другой запрос или переключите фильтр.</p>
+      <p id="instructionsEmpty" class="instructions-empty" hidden>В этом фильтре пока нет инструкций. Добавьте новую выше.</p>
     </div>
   </div>
   <div id="historyView" class="tab-view" aria-label="Вкладка истории">
@@ -755,16 +784,20 @@ const orderView = document.getElementById("orderView");
 const instructionsView = document.getElementById("instructionsView");
 const historyView = document.getElementById("historyView");
 const settingsView = document.getElementById("settingsView");
-const instructionsSearch = document.getElementById("instructionsSearch");
+const instructionForm = document.getElementById("instructionForm");
+const instructionTitleInput = document.getElementById("instructionTitle");
+const instructionCategoryInput = document.getElementById("instructionCategory");
+const instructionDescriptionInput = document.getElementById("instructionDescription");
+const instructionContentInput = document.getElementById("instructionContent");
 const instructionFilters = $$("#instructionFilters .instruction-filter");
-const instructionCards = $$("#instructionsList .instruction-card");
+const instructionsList = document.getElementById("instructionsList");
 const instructionsEmpty = document.getElementById("instructionsEmpty");
-const expandInstructionsBtn = document.getElementById("expandInstructionsBtn");
 const historyGrid = document.getElementById("historyGrid");
 const historyEmpty = document.getElementById("historyEmpty");
 const historyLightbox = document.getElementById("historyLightbox");
 const historyFullscreenImage = document.getElementById("historyFullscreenImage");
 const HISTORY_KEY = "rolly-order-history";
+const CUSTOM_INSTRUCTIONS_KEY = "rolly-custom-instructions";
 
 function getHistoryItems() {
   try {
@@ -808,29 +841,89 @@ function renderHistory() {
   });
 }
 
+function getInstructionCards() {
+  return $$("#instructionsList .instruction-card");
+}
+
+function getCustomInstructions() {
+  try {
+    const parsed = JSON.parse(localStorage.getItem(CUSTOM_INSTRUCTIONS_KEY) || "[]");
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveCustomInstructions(items) {
+  localStorage.setItem(CUSTOM_INSTRUCTIONS_KEY, JSON.stringify(items));
+}
+
+function escapeHtml(value) {
+  return String(value)
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#39;");
+}
+
+function renderCustomInstructions() {
+  if (!instructionsList) return;
+  instructionsList.querySelectorAll(".instruction-card.custom").forEach((card) => card.remove());
+
+  getCustomInstructions().forEach((item) => {
+    const card = document.createElement("details");
+    card.className = "instruction-card custom";
+    card.dataset.category = item.category;
+    card.dataset.id = item.id;
+    card.innerHTML = `
+      <summary>
+        <div class="instruction-card-title">
+          <div>
+            <h3>${escapeHtml(item.title)}</h3>
+            <p>${escapeHtml(item.description)}</p>
+          </div>
+          <button class="instruction-remove" type="button" data-role="remove-instruction" data-id="${escapeHtml(item.id)}" aria-label="Удалить инструкцию ${escapeHtml(item.title)}">Удалить</button>
+        </div>
+      </summary>
+      <div class="instruction-card-body">
+        <div class="instruction-meta">
+          <span class="instruction-badge">${escapeHtml(getCategoryLabel(item.category))}</span>
+          <span class="instruction-badge">Своя инструкция</span>
+        </div>
+        <ol class="instruction-steps">
+          ${item.steps.map((step) => `<li>${escapeHtml(step)}</li>`).join("")}
+        </ol>
+      </div>
+    `;
+    instructionsList.appendChild(card);
+  });
+}
+
+function getCategoryLabel(category) {
+  const labels = {
+    measurement: "Замер",
+    mounting: "Монтаж",
+    fabric: "Ткани",
+    electric: "Электрика",
+    custom: "Другое"
+  };
+  return labels[category] || "Инструкция";
+}
+
 function filterInstructions() {
-  const query = (instructionsSearch?.value || "").trim().toLowerCase();
   const activeFilter = instructionFilters.find((btn) => btn.classList.contains("active"))?.dataset.filter || "all";
   let visibleCount = 0;
 
-  instructionCards.forEach((card) => {
+  getInstructionCards().forEach((card) => {
     const category = card.dataset.category || "";
-    const haystack = `${card.dataset.search || ""} ${card.textContent || ""}`.toLowerCase();
-    const matchesFilter = activeFilter === "all" || category === activeFilter;
-    const matchesQuery = !query || haystack.includes(query);
-    const isVisible = matchesFilter && matchesQuery;
+    const isVisible = activeFilter === "all" || category === activeFilter;
     card.hidden = !isVisible;
     if (!isVisible) card.open = false;
     if (isVisible) visibleCount += 1;
   });
 
   if (instructionsEmpty) instructionsEmpty.hidden = visibleCount !== 0;
-  if (expandInstructionsBtn) {
-    expandInstructionsBtn.disabled = visibleCount === 0;
-    expandInstructionsBtn.textContent = visibleCount && instructionCards.some((card) => !card.hidden && !card.open)
-      ? "Развернуть всё"
-      : "Свернуть всё";
-  }
 }
 
 function setActiveView(viewName) {
@@ -877,30 +970,69 @@ instructionFilters.forEach((button) => {
   });
 });
 
-instructionsSearch?.addEventListener("input", filterInstructions);
-
-instructionCards.forEach((card) => {
-  card.addEventListener("toggle", () => {
-    if (!card.open) {
-      filterInstructions();
-      return;
-    }
-    instructionCards.forEach((otherCard) => {
-      if (otherCard !== card && !otherCard.hidden) otherCard.open = false;
-    });
+instructionsList?.addEventListener("toggle", (event) => {
+  const card = event.target;
+  if (!(card instanceof HTMLDetailsElement) || !card.classList.contains("instruction-card")) return;
+  if (!card.open) {
     filterInstructions();
-  });
-});
-
-expandInstructionsBtn?.addEventListener("click", () => {
-  const hiddenCards = instructionCards.filter((card) => !card.hidden);
-  const shouldOpen = hiddenCards.some((card) => !card.open);
-  hiddenCards.forEach((card) => {
-    card.open = shouldOpen;
+    return;
+  }
+  getInstructionCards().forEach((otherCard) => {
+    if (otherCard !== card && !otherCard.hidden) otherCard.open = false;
   });
   filterInstructions();
+}, true);
+
+instructionForm?.addEventListener("submit", (event) => {
+  event.preventDefault();
+
+  const title = instructionTitleInput?.value.trim();
+  const category = instructionCategoryInput?.value || "custom";
+  const description = instructionDescriptionInput?.value.trim();
+  const steps = (instructionContentInput?.value || "")
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean);
+
+  if (!title || !description || !steps.length) {
+    showToast("Заполните заголовок, описание и хотя бы один пункт инструкции", "error");
+    return;
+  }
+
+  const items = getCustomInstructions();
+  items.unshift({
+    id: `instruction-${Date.now()}`,
+    title,
+    category,
+    description,
+    steps
+  });
+  saveCustomInstructions(items);
+  renderCustomInstructions();
+  filterInstructions();
+  instructionForm.reset();
+  if (instructionCategoryInput) instructionCategoryInput.value = "measurement";
+  showToast("Инструкция добавлена", "success");
 });
 
+instructionsList?.addEventListener("click", async (event) => {
+  const button = event.target.closest('[data-role="remove-instruction"]');
+  if (!button) return;
+  event.preventDefault();
+  event.stopPropagation();
+  const instructionId = button.dataset.id;
+  if (!instructionId) return;
+
+  if (!(await showConfirm("Удалить эту инструкцию?", "Удалить"))) return;
+
+  const nextItems = getCustomInstructions().filter((item) => item.id !== instructionId);
+  saveCustomInstructions(nextItems);
+  renderCustomInstructions();
+  filterInstructions();
+  showToast("Инструкция удалена", "success");
+});
+
+renderCustomInstructions();
 filterInstructions();
 
 historyLightbox?.addEventListener("click", () => {
