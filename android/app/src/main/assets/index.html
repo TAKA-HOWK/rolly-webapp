@@ -94,24 +94,54 @@
   .muted{color:var(--muted)}
   .tab-view{display:none}
   .tab-view.active{display:block}
-  .instructions-grid{
-    display:grid;
-    grid-template-columns:repeat(3,minmax(0,1fr));
-    gap:10px;
-    margin-top:14px;
-  }
-  .instruction-btn{
-    width:100%;
-    min-height:56px;
-    text-align:center;
-    white-space:normal;
-  }
+  .instructions-panel{display:grid;gap:14px;margin-top:14px}
+  .instructions-toolbar{display:grid;gap:10px}
+  .instructions-search{position:relative}
+  .instructions-search input{padding-left:40px}
+  .instructions-search-icon{position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--muted);pointer-events:none}
+  .instructions-filters{display:flex;flex-wrap:wrap;gap:8px}
+  .instruction-filter{border:1px solid var(--border);background:var(--control-bg);color:var(--text);border-radius:999px;padding:9px 14px;cursor:pointer;font-weight:600}
+  .instruction-filter.active{background:var(--btn-secondary-bg);border-color:var(--accent);color:var(--accent)}
+  .instructions-summary{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+  .instructions-tip{border:1px solid var(--border);border-radius:14px;padding:14px;background:linear-gradient(180deg,var(--btn-secondary-bg),var(--card))}
+  .instructions-tip h3{margin:0 0 8px;font-size:15px}
+  .instructions-tip p{margin:0;color:var(--muted);font-size:14px;line-height:1.45}
+  .instructions-list{display:grid;gap:10px}
+  .instruction-card{border:1px solid var(--border);border-radius:14px;background:var(--card);overflow:hidden}
+  .instruction-card[hidden]{display:none}
+  .instruction-card summary{list-style:none;display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:14px;cursor:pointer}
+  .instruction-card summary::-webkit-details-marker{display:none}
+  .instruction-card summary::after{content:"+";font-size:22px;line-height:1;color:var(--muted);margin-top:2px}
+  .instruction-card[open] summary::after{content:"−"}
+  .instruction-card h3{margin:0 0 4px;font-size:16px}
+  .instruction-card p{margin:0;color:var(--muted);font-size:14px;line-height:1.45}
+  .instruction-card-body{padding:0 14px 14px;border-top:1px solid var(--border);display:grid;gap:12px}
+  .instruction-meta{display:flex;flex-wrap:wrap;gap:8px;padding-top:12px}
+  .instruction-badge{display:inline-flex;align-items:center;padding:6px 10px;border-radius:999px;background:var(--btn-secondary-bg);border:1px solid var(--border);font-size:12px;font-weight:700;color:var(--header-text)}
+  .instruction-steps,.instruction-checklist{margin:0;padding-left:18px;display:grid;gap:6px;color:var(--text);font-size:14px;line-height:1.45}
+  .instruction-note{margin:0;padding:10px 12px;border-radius:12px;background:var(--btn-secondary-bg);color:var(--text);font-size:14px;line-height:1.45}
+  .instructions-empty{margin:0;padding:14px;border:1px dashed var(--border);border-radius:14px;color:var(--muted);font-size:14px;text-align:center}
   .history-header{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px}
   .history-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:10px}
   .history-card{border:1px solid var(--border);border-radius:12px;overflow:hidden;background:var(--control-bg);cursor:pointer}
   .history-card img{display:block;width:100%;aspect-ratio:4/3;object-fit:cover;background:#fff}
   .history-meta{padding:8px 10px;font-size:12px;color:var(--muted)}
   .history-empty{margin:0;color:var(--muted);font-size:14px}
+  .settings-list{display:grid;gap:2px;border:1px solid var(--border);border-radius:16px;background:var(--control-bg);overflow:hidden}
+  .settings-item{padding:14px 12px;border-bottom:1px solid var(--border);background:var(--control-bg)}
+  .settings-item:last-child{border-bottom:none}
+  .settings-row{display:flex;align-items:center;justify-content:space-between;gap:12px}
+  .settings-title{margin:0;font-size:15px;color:var(--text)}
+  .settings-subtext{margin:10px 0 0;color:var(--muted);font-size:13px}
+  .switch{position:relative;display:inline-block;width:46px;height:28px;flex-shrink:0}
+  .switch input{opacity:0;width:0;height:0}
+  .switch-slider{position:absolute;inset:0;border-radius:99px;background:#b6bfce;transition:background .2s ease;cursor:pointer}
+  .switch-slider::before{content:"";position:absolute;width:22px;height:22px;left:3px;top:3px;border-radius:50%;background:#fff;transition:transform .2s ease;box-shadow:0 1px 3px rgba(0,0,0,.25)}
+  .switch input:checked + .switch-slider{background:var(--accent)}
+  .switch input:checked + .switch-slider::before{transform:translateX(18px)}
+  .settings-input-wrap{margin-top:10px}
+  .settings-input-wrap input:disabled{opacity:.55;cursor:not-allowed}
+  .settings-reset{margin-top:14px}
   .history-lightbox{position:fixed;inset:0;background:rgba(0,0,0,.88);display:none;align-items:center;justify-content:center;padding:14px;z-index:1700;cursor:zoom-out}
   .history-lightbox.show{display:flex}
   .history-lightbox img{max-width:100%;max-height:100%;object-fit:contain;border-radius:8px}
@@ -239,6 +269,9 @@ th, td {padding: 8px 6px;white-space: nowrap;}
 #notes {font-size: 14px;}
 .bottom-dock{bottom:0;width:calc(100% - 12px);padding:6px;gap:6px}
 .bottom-dock button{font-size:13px;padding:30px 4px}
+.instructions-summary{grid-template-columns:1fr;}
+.instruction-card summary{padding:12px;}
+.instruction-card-body{padding:0 12px 12px;}
 }
 
 </style>
@@ -263,8 +296,7 @@ th, td {padding: 8px 6px;white-space: nowrap;}
 <div class="wrap">
   <div class="card">
     <div class="header">
-      <h1>Заказ рольштор</h1>
-      <button class="btn secondary" id="themeToggle" type="button">🌙 Тёмная тема</button>
+      <h1 id="viewTitle">Заказ рольштор</h1>
     </div>
     <div id="orderView" class="tab-view active">
     <div class="grid">
@@ -399,14 +431,152 @@ th, td {padding: 8px 6px;white-space: nowrap;}
     </div>
   </div>
 
-  <div id="instructionsView" class="tab-view" aria-label="Вкладка инструкции">
-    <h2 style="margin:0 0 10px;font-size:18px;">Инструкции</h2>
-    <div class="instructions-grid">
-      <button class="btn secondary instruction-btn" type="button">Как правильно сделать замер кассеты</button>
-      <button class="btn secondary instruction-btn" type="button">Как правильно сделать замер открытой системы</button>
-      <button class="btn secondary instruction-btn" type="button">Рабочие высоты тканей для Uni</button>
-      <button class="btn secondary instruction-btn" type="button">Как настраивать электрику</button>
-      <button class="btn secondary instruction-btn" type="button">Как переделать открытую систему из "стеновой" в "потолочную"</button>
+  <div id="instructionsView" class="tab-view" aria-label="Вкладка справка">
+    <div class="history-header">
+      <div>
+        <h2 style="margin:0;font-size:18px;">Справка</h2>
+        <p class="history-empty" style="margin-top:6px;">Быстрый доступ к частым вопросам по замеру, тканям и монтажу.</p>
+      </div>
+      <button class="btn secondary" type="button" id="expandInstructionsBtn">Развернуть всё</button>
+    </div>
+    <div class="instructions-panel">
+      <div class="instructions-toolbar">
+        <label class="instructions-search">
+          <span class="instructions-search-icon" aria-hidden="true">🔎</span>
+          <input id="instructionsSearch" type="search" placeholder="Например: кассета, электрика, Uni" aria-label="Поиск по справке">
+        </label>
+        <div class="instructions-filters" id="instructionFilters" aria-label="Фильтры справки">
+          <button class="instruction-filter active" type="button" data-filter="all">Все</button>
+          <button class="instruction-filter" type="button" data-filter="measurement">Замер</button>
+          <button class="instruction-filter" type="button" data-filter="mounting">Монтаж</button>
+          <button class="instruction-filter" type="button" data-filter="fabric">Ткани</button>
+          <button class="instruction-filter" type="button" data-filter="electric">Электрика</button>
+        </div>
+      </div>
+
+      <div class="instructions-summary">
+        <section class="instructions-tip">
+          <h3>Что обычно ищут</h3>
+          <p>Замер кассеты, перевод крепления, рабочие высоты тканей и базовая настройка электрики теперь собраны в одном месте.</p>
+        </section>
+        <section class="instructions-tip">
+          <h3>Как пользоваться</h3>
+          <p>Используйте поиск по ключевым словам или фильтры по теме, затем откройте нужную карточку — шаги и заметки будут внутри.</p>
+        </section>
+      </div>
+
+      <div class="instructions-list" id="instructionsList">
+        <details class="instruction-card" data-category="measurement" data-search="кассета замер направляющие ширина высота короб">
+          <summary>
+            <div>
+              <h3>Как правильно сделать замер кассеты</h3>
+              <p>Короткая памятка, чтобы не ошибиться с шириной, высотой и местом крепления.</p>
+            </div>
+          </summary>
+          <div class="instruction-card-body">
+            <div class="instruction-meta">
+              <span class="instruction-badge">Замер</span>
+              <span class="instruction-badge">Кассетная система</span>
+            </div>
+            <ol class="instruction-steps">
+              <li>Проверьте тип створки и убедитесь, что ручка и штапик не мешают кассете.</li>
+              <li>Замерьте ширину по внешним краям штапика в верхней части створки.</li>
+              <li>Высоту снимайте от верхней точки штапика до нижней, без учёта резинового уплотнителя.</li>
+              <li>Если есть сомнение по глубине, отдельно зафиксируйте выступающие элементы рядом с коробом.</li>
+            </ol>
+            <p class="instruction-note">Совет: сразу отмечайте, где будет управление — слева или справа, чтобы не возвращаться к заказу позже.</p>
+          </div>
+        </details>
+
+        <details class="instruction-card" data-category="measurement" data-search="открытая система замер вал цепь кронштейн ширина высота">
+          <summary>
+            <div>
+              <h3>Как правильно сделать замер открытой системы</h3>
+              <p>Подходит для случаев, когда ткань и вал остаются на виду.</p>
+            </div>
+          </summary>
+          <div class="instruction-card-body">
+            <div class="instruction-meta">
+              <span class="instruction-badge">Замер</span>
+              <span class="instruction-badge">Открытая система</span>
+            </div>
+            <ul class="instruction-checklist">
+              <li>Определите, где крепится изделие: створка, проём, стена или потолок.</li>
+              <li>Для створки ориентируйтесь на полезную ширину стекла с запасом под перекрытие.</li>
+              <li>Для проёма закладывайте запас по ширине и высоте, чтобы ткань перекрывала световой зазор.</li>
+              <li>Проверьте, не упирается ли вал в откосы, ручки и декоративные элементы.</li>
+            </ul>
+            <p class="instruction-note">Важно: отдельно фиксируйте габарит изделия и отдельно — ширину ткани, если это критично для монтажа.</p>
+          </div>
+        </details>
+
+        <details class="instruction-card" data-category="fabric" data-search="uni ткани рабочие высоты высота рулон ограничение">
+          <summary>
+            <div>
+              <h3>Рабочие высоты тканей для Uni</h3>
+              <p>Напоминание, когда нужно быстро проверить, подходит ли ткань под высоту изделия.</p>
+            </div>
+          </summary>
+          <div class="instruction-card-body">
+            <div class="instruction-meta">
+              <span class="instruction-badge">Ткани</span>
+              <span class="instruction-badge">Uni</span>
+            </div>
+            <ol class="instruction-steps">
+              <li>Проверьте рабочую высоту ткани перед расчётом, особенно для высоких створок.</li>
+              <li>Сравните требуемую высоту изделия с паспортной высотой конкретной ткани.</li>
+              <li>Если высота на границе допустимого значения, лучше сразу подобрать альтернативу.</li>
+            </ol>
+            <p class="instruction-note">Подсказка: если ткань ограничена по высоте, оставьте это в примечании к заказу, чтобы не потерять при передаче в работу.</p>
+          </div>
+        </details>
+
+        <details class="instruction-card" data-category="electric" data-search="электрика мотор настройка концевики пульт питание">
+          <summary>
+            <div>
+              <h3>Как настраивать электрику</h3>
+              <p>Базовая последовательность для первого запуска и проверки работы привода.</p>
+            </div>
+          </summary>
+          <div class="instruction-card-body">
+            <div class="instruction-meta">
+              <span class="instruction-badge">Электрика</span>
+              <span class="instruction-badge">Пуск и проверка</span>
+            </div>
+            <ul class="instruction-checklist">
+              <li>Проверьте питание, полярность и доступность точки подключения до монтажа.</li>
+              <li>Сначала свяжите мотор с пультом или кнопкой управления, затем выставляйте крайние положения.</li>
+              <li>После настройки обязательно сделайте полный цикл вверх/вниз и убедитесь, что ткань идёт ровно.</li>
+              <li>Если направление движения перепутано, измените его до финальной фиксации концевиков.</li>
+            </ul>
+            <p class="instruction-note">Важно: любые финальные значения крайних положений лучше записывать сразу после настройки.</p>
+          </div>
+        </details>
+
+        <details class="instruction-card" data-category="mounting" data-search="стеновая потолочная переделать открытую систему крепление кронштейн">
+          <summary>
+            <div>
+              <h3>Как переделать открытую систему из стеновой в потолочную</h3>
+              <p>Порядок действий, если на объекте меняется тип крепления.</p>
+            </div>
+          </summary>
+          <div class="instruction-card-body">
+            <div class="instruction-meta">
+              <span class="instruction-badge">Монтаж</span>
+              <span class="instruction-badge">Переход крепления</span>
+            </div>
+            <ol class="instruction-steps">
+              <li>Проверьте, хватает ли отступа от потолка для свободного хода ткани и вала.</li>
+              <li>Замените или переверните кронштейны в соответствии с типом системы.</li>
+              <li>Пересоберите крепёж так, чтобы ось вала оставалась параллельной линии потолка.</li>
+              <li>После установки проверьте перекрытие проёма и отсутствие касаний по всей высоте.</li>
+            </ol>
+            <p class="instruction-note">Совет: если меняется тип крепления, полезно сразу обновить примечание в заказе и фото в истории.</p>
+          </div>
+        </details>
+      </div>
+
+      <p id="instructionsEmpty" class="instructions-empty" hidden>Ничего не найдено. Попробуйте другой запрос или переключите фильтр.</p>
     </div>
   </div>
   <div id="historyView" class="tab-view" aria-label="Вкладка истории">
@@ -416,6 +586,44 @@ th, td {padding: 8px 6px;white-space: nowrap;}
     </div>
     <p id="historyEmpty" class="history-empty">История пустая. Сохраните заказ в JPEG, чтобы он появился здесь.</p>
     <div id="historyGrid" class="history-grid"></div>
+  </div>
+  <div id="settingsView" class="tab-view" aria-label="Вкладка настроек">
+    <h2 style="margin:0 0 10px;font-size:18px;">Настройки</h2>
+    <div class="settings-list">
+      <section class="settings-item">
+        <div class="settings-row">
+          <h3 class="settings-title">Тёмная тема интерфейса</h3>
+          <label class="switch" aria-label="Тёмная тема интерфейса">
+            <input id="themeSwitch" type="checkbox">
+            <span class="switch-slider"></span>
+          </label>
+        </div>
+      </section>
+      <section class="settings-item">
+        <div class="settings-row">
+          <h3 class="settings-title">Дату заказа выставлять автоматически</h3>
+          <label class="switch" aria-label="Дату заказа выставлять автоматически">
+            <input id="dateAutoSwitch" type="checkbox">
+            <span class="switch-slider"></span>
+          </label>
+        </div>
+      </section>
+      <section class="settings-item">
+        <div class="settings-row">
+          <h3 class="settings-title">Автозаполнение заказчика</h3>
+          <label class="switch" aria-label="Автозаполнение заказчика">
+            <input id="customerAutofill" type="checkbox">
+            <span class="switch-slider"></span>
+          </label>
+        </div>
+        <div class="settings-input-wrap">
+          <input id="customerDefault" type="text" placeholder="Например: ИП 'Успешный'" aria-label="Заказчик по умолчанию" disabled>
+        </div>
+      </section>
+    </div>
+    <div class="settings-reset">
+      <button class="btn secondary" type="button" id="resetSettingsBtn">Сбросить все настройки</button>
+    </div>
   </div>
   </div>
 </div>
@@ -433,7 +641,7 @@ th, td {padding: 8px 6px;white-space: nowrap;}
 </svg>
     </span>
   </button>
-  <button type="button" id="navInstructions" aria-label="Инструкции" title="Инструкции">
+  <button type="button" id="navInstructions" aria-label="Справка" title="Справка">
     <span class="nav-icon" aria-hidden="true">
       <svg viewBox="0 0 24 24">
   <circle cx="12" cy="12" r="11"/>
@@ -469,6 +677,13 @@ th, td {padding: 8px 6px;white-space: nowrap;}
 
 <script>
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
+function formatOrderDate(value) {
+  if (!value) return "";
+  const [year, month, day] = value.split("-");
+  if (!year || !month || !day) return value;
+  return `${month}.${day}.${year}`;
+}
+
 function showToast(message, type = "info", timeout = 3200) {
   const viewport = document.getElementById("toastViewport");
   if (!viewport) return;
@@ -530,6 +745,12 @@ const navButtons = $$(".bottom-dock button");
 const orderView = document.getElementById("orderView");
 const instructionsView = document.getElementById("instructionsView");
 const historyView = document.getElementById("historyView");
+const settingsView = document.getElementById("settingsView");
+const instructionsSearch = document.getElementById("instructionsSearch");
+const instructionFilters = $$("#instructionFilters .instruction-filter");
+const instructionCards = $$("#instructionsList .instruction-card");
+const instructionsEmpty = document.getElementById("instructionsEmpty");
+const expandInstructionsBtn = document.getElementById("expandInstructionsBtn");
 const historyGrid = document.getElementById("historyGrid");
 const historyEmpty = document.getElementById("historyEmpty");
 const historyLightbox = document.getElementById("historyLightbox");
@@ -578,10 +799,40 @@ function renderHistory() {
   });
 }
 
+function filterInstructions() {
+  const query = (instructionsSearch?.value || "").trim().toLowerCase();
+  const activeFilter = instructionFilters.find((btn) => btn.classList.contains("active"))?.dataset.filter || "all";
+  let visibleCount = 0;
+
+  instructionCards.forEach((card) => {
+    const category = card.dataset.category || "";
+    const haystack = `${card.dataset.search || ""} ${card.textContent || ""}`.toLowerCase();
+    const matchesFilter = activeFilter === "all" || category === activeFilter;
+    const matchesQuery = !query || haystack.includes(query);
+    const isVisible = matchesFilter && matchesQuery;
+    card.hidden = !isVisible;
+    if (!isVisible) card.open = false;
+    if (isVisible) visibleCount += 1;
+  });
+
+  if (instructionsEmpty) instructionsEmpty.hidden = visibleCount !== 0;
+  if (expandInstructionsBtn) {
+    expandInstructionsBtn.disabled = visibleCount === 0;
+    expandInstructionsBtn.textContent = visibleCount && instructionCards.some((card) => !card.hidden && !card.open)
+      ? "Развернуть всё"
+      : "Свернуть всё";
+  }
+}
+
 function setActiveView(viewName) {
   orderView?.classList.toggle("active", viewName === "order");
   instructionsView?.classList.toggle("active", viewName === "instructions");
   historyView?.classList.toggle("active", viewName === "history");
+  settingsView?.classList.toggle("active", viewName === "settings");
+
+  const title = document.getElementById("viewTitle");
+  if (!title) return;
+  title.textContent = viewName === "order" ? "Заказ рольштор" : "";
 }
 
 function setActiveNavButton(button) {
@@ -599,7 +850,8 @@ navButtons.forEach((button, index) => {
     const viewByButtonId = {
       navOrder: "order",
       navInstructions: "instructions",
-      navHistory: "history"
+      navHistory: "history",
+      navSettings: "settings"
     };
     setActiveView(viewByButtonId[button.id] || "order");
   });
@@ -608,6 +860,39 @@ navButtons.forEach((button, index) => {
     setActiveView("order");
   }
 });
+
+instructionFilters.forEach((button) => {
+  button.addEventListener("click", () => {
+    instructionFilters.forEach((btn) => btn.classList.toggle("active", btn === button));
+    filterInstructions();
+  });
+});
+
+instructionsSearch?.addEventListener("input", filterInstructions);
+
+instructionCards.forEach((card) => {
+  card.addEventListener("toggle", () => {
+    if (!card.open) {
+      filterInstructions();
+      return;
+    }
+    instructionCards.forEach((otherCard) => {
+      if (otherCard !== card && !otherCard.hidden) otherCard.open = false;
+    });
+    filterInstructions();
+  });
+});
+
+expandInstructionsBtn?.addEventListener("click", () => {
+  const hiddenCards = instructionCards.filter((card) => !card.hidden);
+  const shouldOpen = hiddenCards.some((card) => !card.open);
+  hiddenCards.forEach((card) => {
+    card.open = shouldOpen;
+  });
+  filterInstructions();
+});
+
+filterInstructions();
 
 historyLightbox?.addEventListener("click", () => {
   historyLightbox.classList.remove("show");
@@ -626,22 +911,130 @@ document.getElementById("clearHistoryBtn")?.addEventListener("click", async () =
 renderHistory();
 
 const THEME_KEY = "rolly-theme";
-const themeToggle = document.getElementById("themeToggle");
+const SETTINGS_KEY = "rolly-settings";
+const themeSwitch = document.getElementById("themeSwitch");
+const dateInput = document.getElementById("date");
+const dateAutoSwitch = document.getElementById("dateAutoSwitch");
+const customerInput = document.getElementById("customer");
+const customerAutofill = document.getElementById("customerAutofill");
+const customerDefault = document.getElementById("customerDefault");
+const resetSettingsBtn = document.getElementById("resetSettingsBtn");
+
+const defaultSettings = {
+  theme: "light",
+  dateMode: "manual",
+  customerAutofillEnabled: false,
+  defaultCustomer: ""
+};
+
+function getTodayISODate() {
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = String(today.getMonth() + 1).padStart(2, "0");
+  const day = String(today.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function loadSettings() {
+  try {
+    const parsed = JSON.parse(localStorage.getItem(SETTINGS_KEY) || "{}");
+    return {
+      ...defaultSettings,
+      ...parsed,
+      theme: parsed?.theme === "dark" ? "dark" : "light",
+      dateMode: parsed?.dateMode === "auto" ? "auto" : "manual",
+      customerAutofillEnabled: Boolean(parsed?.customerAutofillEnabled),
+      defaultCustomer: typeof parsed?.defaultCustomer === "string" ? parsed.defaultCustomer : ""
+    };
+  } catch {
+    return { ...defaultSettings };
+  }
+}
+
+function saveSettings(settings) {
+  localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+}
 
 function applyTheme(theme) {
   const normalizedTheme = theme === "dark" ? "dark" : "light";
   document.body.setAttribute("data-theme", normalizedTheme);
-  themeToggle.textContent = normalizedTheme === "dark" ? "☀️ Светлая тема" : "🌙 Тёмная тема";
+  if (themeSwitch) themeSwitch.checked = normalizedTheme === "dark";
 }
 
-const savedTheme = localStorage.getItem(THEME_KEY) || "light";
-applyTheme(savedTheme);
+function applyDateMode(mode) {
+  const normalizedMode = mode === "manual" ? "manual" : "auto";
+  if (!dateInput) return;
+  dateInput.readOnly = normalizedMode === "auto";
+  dateInput.disabled = normalizedMode === "auto";
+  if (normalizedMode === "auto") {
+    dateInput.value = getTodayISODate();
+  }
+  if (dateAutoSwitch) dateAutoSwitch.checked = normalizedMode === "auto";
+}
 
-themeToggle.addEventListener("click", () => {
-  const currentTheme = document.body.getAttribute("data-theme") === "dark" ? "dark" : "light";
-  const nextTheme = currentTheme === "dark" ? "light" : "dark";
+function applyCustomerSettings(settings) {
+  if (customerAutofill) customerAutofill.checked = settings.customerAutofillEnabled;
+  if (customerDefault) {
+    customerDefault.value = settings.defaultCustomer;
+    customerDefault.disabled = !settings.customerAutofillEnabled;
+  }
+  if (customerInput && settings.customerAutofillEnabled && settings.defaultCustomer) {
+    customerInput.value = settings.defaultCustomer;
+  }
+}
+
+const savedSettings = loadSettings();
+const storedTheme = localStorage.getItem(THEME_KEY);
+const initialTheme = savedSettings.theme || (storedTheme === "dark" ? "dark" : "light");
+applyTheme(initialTheme);
+applyDateMode(savedSettings.dateMode);
+applyCustomerSettings(savedSettings);
+
+themeSwitch?.addEventListener("change", () => {
+  const nextTheme = themeSwitch.checked ? "dark" : "light";
   applyTheme(nextTheme);
   localStorage.setItem(THEME_KEY, nextTheme);
+  saveSettings({ ...loadSettings(), theme: nextTheme });
+});
+
+dateAutoSwitch?.addEventListener("change", () => {
+  const mode = dateAutoSwitch.checked ? "auto" : "manual";
+  applyDateMode(mode);
+  saveSettings({ ...loadSettings(), dateMode: mode });
+});
+
+customerAutofill?.addEventListener("change", () => {
+  const nextSettings = {
+    ...loadSettings(),
+    customerAutofillEnabled: customerAutofill.checked
+  };
+  if (customerDefault) customerDefault.disabled = !nextSettings.customerAutofillEnabled;
+  if (nextSettings.customerAutofillEnabled && nextSettings.defaultCustomer && customerInput) {
+    customerInput.value = nextSettings.defaultCustomer;
+  }
+  saveSettings(nextSettings);
+});
+
+customerDefault?.addEventListener("input", () => {
+  const nextSettings = {
+    ...loadSettings(),
+    defaultCustomer: customerDefault.value.trim()
+  };
+  if (nextSettings.customerAutofillEnabled && customerInput) {
+    customerInput.value = nextSettings.defaultCustomer;
+  }
+  saveSettings(nextSettings);
+});
+
+resetSettingsBtn?.addEventListener("click", async () => {
+  if (!await showConfirm("Сбросить все настройки приложения?", "Сбросить")) return;
+  localStorage.removeItem(SETTINGS_KEY);
+  localStorage.setItem(THEME_KEY, defaultSettings.theme);
+  applyTheme(defaultSettings.theme);
+  applyDateMode(defaultSettings.dateMode);
+  if (customerInput) customerInput.value = "";
+  applyCustomerSettings(defaultSettings);
+  showToast("Настройки сброшены", "success");
 });
 
 document.body.classList.add("loading");
@@ -806,7 +1199,7 @@ $("#sortSelect").addEventListener("change", () => {
   if (!side) return showToast("Выберите сторону управления", "error");
 
      // Показать заказчика и номер заказа
-$("#dateNumberDisplay").textContent = $("#date").value.trim();
+$("#dateNumberDisplay").textContent = formatOrderDate($("#date").value.trim());
 $("#orderNumberDisplay").textContent = $("#numb").value.trim();
 $("#customerDisplay").textContent = $("#customer").value.trim();
 $("#orderInfo").style.display = "block";
@@ -832,14 +1225,16 @@ $("#clearBtn").onclick = async () => {
   if (!hasTableData && !hasFormData) return; // ничего не заполнено
 
   if (await showConfirm("Очистить все данные заказа и таблицу?", "Очистить")) {
+    const settings = loadSettings();
+
     // Очистить таблицу
     rows = [];
     render();
 
     // Очистить форму
-    $("#date").value = "";
+    $("#date").value = settings.dateMode === "auto" ? getTodayISODate() : "";
     $("#numb").value = "";
-    $("#customer").value = "";
+    $("#customer").value = settings.customerAutofillEnabled ? settings.defaultCustomer : "";
     $("#systemInput").value = "";
     syncBasisAvailabilityForSystem("");
     $("#color").value = "";
@@ -973,7 +1368,7 @@ $("#saveJpeg").onclick = async () => {
 
   const contentWidth = pageWidth - margin * 2;
 
-  const dateNumber = $("#date").value.trim();
+  const dateNumber = formatOrderDate($("#date").value.trim());
   const orderNumber = $("#numb").value.trim();
   const customer = $("#customer").value.trim();
   const notes = $("#notes").value.trim();
@@ -1097,6 +1492,8 @@ $("#saveJpeg").onclick = async () => {
   if (!savedToAndroid) {
     pageArtifacts.forEach((p) => tryAutoDownloadBlob(p.blob, p.filename));
   }
+
+  showToast(`Заказ сохранён в JPEG (${pageArtifacts.length} стр.)`, "success");
 };
 
 
