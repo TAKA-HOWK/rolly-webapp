@@ -305,8 +305,18 @@ th, td {padding: 8px 6px;white-space: nowrap;}
 <div id="instructionModal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="instructionModalTitle" aria-describedby="instructionModalDescription">
   <div class="modal-card modal-card-lg">
     <h3 id="instructionModalTitle">Добавить свою инструкцию</h3>
-    <p id="instructionModalDescription">Новая инструкция будет сохранена в разделе «Другое».</p>
+    <p id="instructionModalDescription">Выберите раздел, в котором нужно сохранить новую инструкцию.</p>
     <form class="instruction-modal-form" id="instructionForm">
+      <div>
+        <label for="instructionCategory">Раздел</label>
+        <select id="instructionCategory" required>
+          <option value="measurement">Замер</option>
+          <option value="mounting">Монтаж</option>
+          <option value="fabric">Ткани</option>
+          <option value="electric">Электрика</option>
+          <option value="custom">Другое</option>
+        </select>
+      </div>
       <div>
         <label for="instructionTitle">Заголовок инструкции</label>
         <input id="instructionTitle" type="text" placeholder="Например: Как упаковать заказ перед доставкой" maxlength="120" required>
@@ -792,6 +802,7 @@ const instructionForm = document.getElementById("instructionForm");
 const instructionModal = document.getElementById("instructionModal");
 const openInstructionModalBtn = document.getElementById("openInstructionModal");
 const closeInstructionModalBtn = document.getElementById("instructionModalCancel");
+const instructionCategoryInput = document.getElementById("instructionCategory");
 const instructionTitleInput = document.getElementById("instructionTitle");
 const instructionDescriptionInput = document.getElementById("instructionDescription");
 const instructionContentInput = document.getElementById("instructionContent");
@@ -918,8 +929,12 @@ function getCategoryLabel(category) {
 }
 
 function openInstructionModal() {
+  const activeFilter = instructionFilters.find((btn) => btn.classList.contains("active"))?.dataset.filter;
+  if (instructionCategoryInput) {
+    instructionCategoryInput.value = activeFilter && activeFilter !== "all" ? activeFilter : "measurement";
+  }
   instructionModal?.classList.add("show");
-  setTimeout(() => instructionTitleInput?.focus(), 0);
+  setTimeout(() => instructionCategoryInput?.focus(), 0);
 }
 
 function closeInstructionModal() {
@@ -1013,15 +1028,15 @@ instructionForm?.addEventListener("submit", (event) => {
   event.preventDefault();
 
   const title = instructionTitleInput?.value.trim();
-  const category = "custom";
+  const category = instructionCategoryInput?.value;
   const description = instructionDescriptionInput?.value.trim();
   const steps = (instructionContentInput?.value || "")
     .split("\n")
     .map((line) => line.trim())
     .filter(Boolean);
 
-  if (!title || !description || !steps.length) {
-    showToast("Заполните заголовок, описание и хотя бы один пункт инструкции", "error");
+  if (!title || !category || !description || !steps.length) {
+    showToast("Выберите раздел, заполните заголовок, описание и хотя бы один пункт инструкции", "error");
     return;
   }
 
@@ -1038,7 +1053,7 @@ instructionForm?.addEventListener("submit", (event) => {
   filterInstructions();
   instructionForm.reset();
   closeInstructionModal();
-  instructionFilters.forEach((btn) => btn.classList.toggle("active", btn.dataset.filter === "custom"));
+  instructionFilters.forEach((btn) => btn.classList.toggle("active", btn.dataset.filter === category));
   filterInstructions();
   showToast("Инструкция добавлена", "success");
 });
