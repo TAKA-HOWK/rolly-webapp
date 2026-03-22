@@ -125,6 +125,9 @@
   .instruction-steps,.instruction-checklist{margin:0;padding-left:18px;display:grid;gap:6px;color:var(--text);font-size:14px;line-height:1.45}
   .instruction-note{margin:0;padding:10px 12px;border-radius:12px;background:var(--btn-secondary-bg);color:var(--text);font-size:14px;line-height:1.45}
   .instructions-empty{margin:0;padding:14px;border:1px dashed var(--border);border-radius:14px;color:var(--muted);font-size:14px;text-align:center}
+  .instructions-filters-wrap{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+  .instruction-add-btn{min-width:44px;width:44px;height:44px;padding:0;border-radius:12px;font-size:28px;line-height:1;display:inline-flex;align-items:center;justify-content:center}
+  .instruction-modal-form{display:grid;gap:14px}
   .history-header{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px}
   .history-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:10px}
   .history-card{border:1px solid var(--border);border-radius:12px;overflow:hidden;background:var(--control-bg);cursor:pointer}
@@ -193,6 +196,7 @@
   }
   .modal-overlay.show{display:flex}
   .modal-card{max-width:380px;width:100%;background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px;box-shadow:var(--toast-shadow)}
+  .modal-card.modal-card-lg{max-width:560px}
   .modal-card h3{margin:0 0 10px;font-size:18px}
   .modal-card p{margin:0 0 14px;color:var(--muted)}
   .modal-actions{display:flex;justify-content:flex-end;gap:8px;flex-wrap:wrap}
@@ -296,6 +300,30 @@ th, td {padding: 8px 6px;white-space: nowrap;}
       <button class="btn secondary" id="confirmCancel" type="button">Отмена</button>
       <button class="btn primary" id="confirmAccept" type="button">Очистить</button>
     </div>
+  </div>
+</div>
+<div id="instructionModal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="instructionModalTitle" aria-describedby="instructionModalDescription">
+  <div class="modal-card modal-card-lg">
+    <h3 id="instructionModalTitle">Добавить свою инструкцию</h3>
+    <p id="instructionModalDescription">Новая инструкция будет сохранена в разделе «Другое».</p>
+    <form class="instruction-modal-form" id="instructionForm">
+      <div>
+        <label for="instructionTitle">Заголовок инструкции</label>
+        <input id="instructionTitle" type="text" placeholder="Например: Как упаковать заказ перед доставкой" maxlength="120" required>
+      </div>
+      <div>
+        <label for="instructionDescription">Короткое описание</label>
+        <input id="instructionDescription" type="text" placeholder="Что это за инструкция и когда пригодится" maxlength="180" required>
+      </div>
+      <div>
+        <label for="instructionContent">Текст инструкции</label>
+        <textarea id="instructionContent" rows="6" placeholder="Каждый новый пункт пишите с новой строки" required></textarea>
+      </div>
+      <div class="modal-actions">
+        <button class="btn secondary" id="instructionModalCancel" type="button">Отмена</button>
+        <button class="btn primary" type="submit">Добавить инструкцию</button>
+      </div>
+    </form>
   </div>
 </div>
 <div class="wrap">
@@ -445,40 +473,16 @@ th, td {padding: 8px 6px;white-space: nowrap;}
     </div>
     <div class="instructions-panel">
       <div class="instructions-toolbar">
-        <form class="instructions-form" id="instructionForm">
-          <div class="instructions-form-grid">
-            <div>
-              <label for="instructionTitle">Заголовок инструкции</label>
-              <input id="instructionTitle" type="text" placeholder="Например: Как упаковать заказ перед доставкой" maxlength="120" required>
-            </div>
-            <div>
-              <label for="instructionCategory">Категория</label>
-              <select id="instructionCategory" required>
-                <option value="measurement">Замер</option>
-                <option value="mounting">Монтаж</option>
-                <option value="fabric">Ткани</option>
-                <option value="electric">Электрика</option>
-                <option value="custom">Другое</option>
-              </select>
-            </div>
+        <div class="instructions-filters-wrap">
+          <div class="instructions-filters" id="instructionFilters" aria-label="Фильтры справки">
+            <button class="instruction-filter active" type="button" data-filter="all">Все</button>
+            <button class="instruction-filter" type="button" data-filter="measurement">Замер</button>
+            <button class="instruction-filter" type="button" data-filter="mounting">Монтаж</button>
+            <button class="instruction-filter" type="button" data-filter="fabric">Ткани</button>
+            <button class="instruction-filter" type="button" data-filter="electric">Электрика</button>
+            <button class="instruction-filter" type="button" data-filter="custom">Другое</button>
           </div>
-          <div>
-            <label for="instructionDescription">Короткое описание</label>
-            <input id="instructionDescription" type="text" placeholder="Что это за инструкция и когда пригодится" maxlength="180" required>
-          </div>
-          <div>
-            <label for="instructionContent">Текст инструкции</label>
-            <textarea id="instructionContent" rows="5" placeholder="Каждый новый пункт пишите с новой строки" required></textarea>
-          </div>
-          <button class="btn secondary" type="submit">Добавить инструкцию</button>
-        </form>
-        <div class="instructions-filters" id="instructionFilters" aria-label="Фильтры справки">
-          <button class="instruction-filter active" type="button" data-filter="all">Все</button>
-          <button class="instruction-filter" type="button" data-filter="measurement">Замер</button>
-          <button class="instruction-filter" type="button" data-filter="mounting">Монтаж</button>
-          <button class="instruction-filter" type="button" data-filter="fabric">Ткани</button>
-          <button class="instruction-filter" type="button" data-filter="electric">Электрика</button>
-          <button class="instruction-filter" type="button" data-filter="custom">Другое</button>
+          <button class="btn secondary instruction-add-btn" id="openInstructionModal" type="button" aria-label="Добавить свою инструкцию" title="Добавить свою инструкцию">+</button>
         </div>
       </div>
 
@@ -785,8 +789,10 @@ const instructionsView = document.getElementById("instructionsView");
 const historyView = document.getElementById("historyView");
 const settingsView = document.getElementById("settingsView");
 const instructionForm = document.getElementById("instructionForm");
+const instructionModal = document.getElementById("instructionModal");
+const openInstructionModalBtn = document.getElementById("openInstructionModal");
+const closeInstructionModalBtn = document.getElementById("instructionModalCancel");
 const instructionTitleInput = document.getElementById("instructionTitle");
-const instructionCategoryInput = document.getElementById("instructionCategory");
 const instructionDescriptionInput = document.getElementById("instructionDescription");
 const instructionContentInput = document.getElementById("instructionContent");
 const instructionFilters = $$("#instructionFilters .instruction-filter");
@@ -911,6 +917,15 @@ function getCategoryLabel(category) {
   return labels[category] || "Инструкция";
 }
 
+function openInstructionModal() {
+  instructionModal?.classList.add("show");
+  setTimeout(() => instructionTitleInput?.focus(), 0);
+}
+
+function closeInstructionModal() {
+  instructionModal?.classList.remove("show");
+}
+
 function filterInstructions() {
   const activeFilter = instructionFilters.find((btn) => btn.classList.contains("active"))?.dataset.filter || "all";
   let visibleCount = 0;
@@ -970,6 +985,17 @@ instructionFilters.forEach((button) => {
   });
 });
 
+openInstructionModalBtn?.addEventListener("click", openInstructionModal);
+closeInstructionModalBtn?.addEventListener("click", closeInstructionModal);
+instructionModal?.addEventListener("click", (event) => {
+  if (event.target === instructionModal) closeInstructionModal();
+});
+document.addEventListener("keydown", (event) => {
+  if (event.key === "Escape" && instructionModal?.classList.contains("show")) {
+    closeInstructionModal();
+  }
+});
+
 instructionsList?.addEventListener("toggle", (event) => {
   const card = event.target;
   if (!(card instanceof HTMLDetailsElement) || !card.classList.contains("instruction-card")) return;
@@ -987,7 +1013,7 @@ instructionForm?.addEventListener("submit", (event) => {
   event.preventDefault();
 
   const title = instructionTitleInput?.value.trim();
-  const category = instructionCategoryInput?.value || "custom";
+  const category = "custom";
   const description = instructionDescriptionInput?.value.trim();
   const steps = (instructionContentInput?.value || "")
     .split("\n")
@@ -1011,7 +1037,9 @@ instructionForm?.addEventListener("submit", (event) => {
   renderCustomInstructions();
   filterInstructions();
   instructionForm.reset();
-  if (instructionCategoryInput) instructionCategoryInput.value = "measurement";
+  closeInstructionModal();
+  instructionFilters.forEach((btn) => btn.classList.toggle("active", btn.dataset.filter === "custom"));
+  filterInstructions();
   showToast("Инструкция добавлена", "success");
 });
 
