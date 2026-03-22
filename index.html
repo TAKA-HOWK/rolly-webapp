@@ -54,6 +54,11 @@
     --overlay:rgba(0,0,0,.58);
   }
   body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,Arial,sans-serif; overscroll-behavior-x: none;}
+  body.loading{overflow:hidden}
+  #loadingScreen{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:9999;opacity:1;visibility:visible;transition:opacity .35s ease,visibility .35s ease}
+  #loadingScreen.hidden{opacity:0;visibility:hidden;pointer-events:none}
+  .loading-box{width:108vw;height:108vh;display:flex;align-items:center;justify-content:center;overflow:hidden;}
+  .loading-box img{width:100%;height:100%;display:block;object-fit:cover;}
   .wrap{max-width:720px;margin:auto;padding:16px}
   .card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px}
   .header{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
@@ -281,6 +286,11 @@ th, td {padding: 8px 6px;white-space: nowrap;}
 </style>
 </head>
 <body>
+<div id="loadingScreen" aria-live="polite" aria-label="Экран загрузки">
+  <div class="loading-box">
+    <img src="loading.gif" alt="" />
+  </div>
+</div>
 <div id="toastViewport" class="toast-viewport" aria-live="polite" aria-atomic="true"></div>
 <div id="confirmModal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="confirmTitle" aria-describedby="confirmMessage">
   <div class="modal-card">
@@ -296,10 +306,10 @@ th, td {padding: 8px 6px;white-space: nowrap;}
   <div class="modal-card modal-card-lg">
     <h3 id="instructionModalTitle">Добавить свою инструкцию</h3>
     <p id="instructionModalDescription">Выберите раздел, в котором нужно сохранить новую инструкцию.</p>
-    <form class="instruction-modal-form" id="instructionForm" autocomplete="off">
+    <form class="instruction-modal-form" id="instructionForm">
       <div>
         <label for="instructionCategory">Раздел</label>
-        <select id="instructionCategory" required autocomplete="off">
+        <select id="instructionCategory" required>
           <option value="measurement">Замер</option>
           <option value="mounting">Монтаж</option>
           <option value="fabric">Ткани</option>
@@ -309,15 +319,15 @@ th, td {padding: 8px 6px;white-space: nowrap;}
       </div>
       <div>
         <label for="instructionTitle">Заголовок инструкции</label>
-        <input id="instructionTitle" type="text" placeholder="Например: Как упаковать заказ перед доставкой" maxlength="120" required autocomplete="off" autocorrect="off" autocapitalize="sentences" spellcheck="false">
+        <input id="instructionTitle" type="text" placeholder="Например: Как упаковать заказ перед доставкой" maxlength="120" required>
       </div>
       <div>
         <label for="instructionDescription">Короткое описание</label>
-        <input id="instructionDescription" type="text" placeholder="Что это за инструкция и когда пригодится" maxlength="180" required autocomplete="off" autocorrect="off" autocapitalize="sentences" spellcheck="false">
+        <input id="instructionDescription" type="text" placeholder="Что это за инструкция и когда пригодится" maxlength="180" required>
       </div>
       <div>
         <label for="instructionContent">Текст инструкции</label>
-        <textarea id="instructionContent" rows="6" placeholder="Каждый новый пункт пишите с новой строки" required autocomplete="off" autocorrect="off" autocapitalize="sentences" spellcheck="false"></textarea>
+        <textarea id="instructionContent" rows="6" placeholder="Каждый новый пункт пишите с новой строки" required></textarea>
       </div>
       <div class="modal-actions">
         <button class="btn secondary" id="instructionModalCancel" type="button">Отмена</button>
@@ -662,16 +672,6 @@ th, td {padding: 8px 6px;white-space: nowrap;}
           <input id="customerDefault" type="text" placeholder="Например: ИП 'Успешный'" aria-label="Заказчик по умолчанию" disabled>
         </div>
       </section>
-      <section class="settings-item">
-        <div class="settings-row">
-          <h3 class="settings-title">Не сохранять историю</h3>
-          <label class="switch" aria-label="Не сохранять историю">
-            <input id="historyDisabledSwitch" type="checkbox">
-            <span class="switch-slider"></span>
-          </label>
-        </div>
-        <p class="settings-subtext">Отключает сохранение JPEG в разделе «История» на этом устройстве.</p>
-      </section>
     </div>
     <div class="settings-reset">
       <button class="btn secondary" type="button" id="resetSettingsBtn">Сбросить все настройки</button>
@@ -729,30 +729,6 @@ th, td {padding: 8px 6px;white-space: nowrap;}
 
 <script>
 const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
-function storageGet(key, fallback = null) {
-  try {
-    const value = localStorage.getItem(key);
-    return value === null ? fallback : value;
-  } catch {
-    return fallback;
-  }
-}
-function storageSet(key, value) {
-  try {
-    localStorage.setItem(key, value);
-    return true;
-  } catch {
-    return false;
-  }
-}
-function storageRemove(key) {
-  try {
-    localStorage.removeItem(key);
-    return true;
-  } catch {
-    return false;
-  }
-}
 function formatOrderDate(value) {
   if (!value) return "";
   const [year, month, day] = value.split("-");
@@ -842,7 +818,7 @@ const CUSTOM_INSTRUCTIONS_KEY = "rolly-custom-instructions";
 
 function getHistoryItems() {
   try {
-    const parsed = JSON.parse(storageGet(HISTORY_KEY, "[]") || "[]");
+    const parsed = JSON.parse(localStorage.getItem(HISTORY_KEY) || "[]");
     return Array.isArray(parsed) ? parsed : [];
   } catch {
     return [];
@@ -850,7 +826,7 @@ function getHistoryItems() {
 }
 
 function saveHistoryItems(items) {
-  storageSet(HISTORY_KEY, JSON.stringify(items));
+  localStorage.setItem(HISTORY_KEY, JSON.stringify(items));
 }
 
 function toggleHistoryLightbox(dataUrl) {
@@ -865,14 +841,6 @@ function toggleHistoryLightbox(dataUrl) {
 
 function renderHistory() {
   if (!historyGrid || !historyEmpty) return;
-  const settings = loadSettings();
-  if (settings.historyDisabled) {
-    historyGrid.innerHTML = "";
-    historyEmpty.textContent = "Сохранение истории отключено в настройках.";
-    historyEmpty.style.display = "block";
-    return;
-  }
-  historyEmpty.textContent = "История пустая. Сохраните заказ в JPEG, чтобы он появился здесь.";
   const items = getHistoryItems();
   historyGrid.innerHTML = "";
   historyEmpty.style.display = items.length ? "none" : "block";
@@ -896,7 +864,7 @@ function getInstructionCards() {
 
 function getCustomInstructions() {
   try {
-    const parsed = JSON.parse(storageGet(CUSTOM_INSTRUCTIONS_KEY, "[]") || "[]");
+    const parsed = JSON.parse(localStorage.getItem(CUSTOM_INSTRUCTIONS_KEY) || "[]");
     return Array.isArray(parsed) ? parsed : [];
   } catch {
     return [];
@@ -904,7 +872,7 @@ function getCustomInstructions() {
 }
 
 function saveCustomInstructions(items) {
-  storageSet(CUSTOM_INSTRUCTIONS_KEY, JSON.stringify(items));
+  localStorage.setItem(CUSTOM_INSTRUCTIONS_KEY, JSON.stringify(items));
 }
 
 function escapeHtml(value) {
@@ -936,6 +904,10 @@ function renderCustomInstructions() {
         </div>
       </summary>
       <div class="instruction-card-body">
+        <div class="instruction-meta">
+          <span class="instruction-badge">${escapeHtml(getCategoryLabel(item.category))}</span>
+          <span class="instruction-badge">Своя инструкция</span>
+        </div>
         <ol class="instruction-steps">
           ${item.steps.map((step) => `<li>${escapeHtml(step)}</li>`).join("")}
         </ol>
@@ -945,6 +917,16 @@ function renderCustomInstructions() {
   });
 }
 
+function getCategoryLabel(category) {
+  const labels = {
+    measurement: "Замер",
+    mounting: "Монтаж",
+    fabric: "Ткани",
+    electric: "Электрика",
+    custom: "Другое"
+  };
+  return labels[category] || "Инструкция";
+}
 
 function openInstructionModal() {
   const activeFilter = instructionFilters.find((btn) => btn.classList.contains("active"))?.dataset.filter;
@@ -1110,6 +1092,8 @@ document.getElementById("clearHistoryBtn")?.addEventListener("click", async () =
   }
 });
 
+renderHistory();
+
 const THEME_KEY = "rolly-theme";
 const SETTINGS_KEY = "rolly-settings";
 const themeSwitch = document.getElementById("themeSwitch");
@@ -1118,15 +1102,13 @@ const dateAutoSwitch = document.getElementById("dateAutoSwitch");
 const customerInput = document.getElementById("customer");
 const customerAutofill = document.getElementById("customerAutofill");
 const customerDefault = document.getElementById("customerDefault");
-const historyDisabledSwitch = document.getElementById("historyDisabledSwitch");
 const resetSettingsBtn = document.getElementById("resetSettingsBtn");
 
 const defaultSettings = {
   theme: "light",
   dateMode: "manual",
   customerAutofillEnabled: false,
-  defaultCustomer: "",
-  historyDisabled: false
+  defaultCustomer: ""
 };
 
 function getTodayISODate() {
@@ -1139,15 +1121,14 @@ function getTodayISODate() {
 
 function loadSettings() {
   try {
-    const parsed = JSON.parse(storageGet(SETTINGS_KEY, "{}") || "{}");
+    const parsed = JSON.parse(localStorage.getItem(SETTINGS_KEY) || "{}");
     return {
       ...defaultSettings,
       ...parsed,
       theme: parsed?.theme === "dark" ? "dark" : "light",
       dateMode: parsed?.dateMode === "auto" ? "auto" : "manual",
       customerAutofillEnabled: Boolean(parsed?.customerAutofillEnabled),
-      defaultCustomer: typeof parsed?.defaultCustomer === "string" ? parsed.defaultCustomer : "",
-      historyDisabled: Boolean(parsed?.historyDisabled)
+      defaultCustomer: typeof parsed?.defaultCustomer === "string" ? parsed.defaultCustomer : ""
     };
   } catch {
     return { ...defaultSettings };
@@ -1155,7 +1136,7 @@ function loadSettings() {
 }
 
 function saveSettings(settings) {
-  storageSet(SETTINGS_KEY, JSON.stringify(settings));
+  localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
 }
 
 function applyTheme(theme) {
@@ -1186,23 +1167,17 @@ function applyCustomerSettings(settings) {
   }
 }
 
-function applyHistorySettings(settings) {
-  if (historyDisabledSwitch) historyDisabledSwitch.checked = settings.historyDisabled;
-}
-
 const savedSettings = loadSettings();
-const storedTheme = storageGet(THEME_KEY);
+const storedTheme = localStorage.getItem(THEME_KEY);
 const initialTheme = savedSettings.theme || (storedTheme === "dark" ? "dark" : "light");
 applyTheme(initialTheme);
 applyDateMode(savedSettings.dateMode);
 applyCustomerSettings(savedSettings);
-applyHistorySettings(savedSettings);
-renderHistory();
 
 themeSwitch?.addEventListener("change", () => {
   const nextTheme = themeSwitch.checked ? "dark" : "light";
   applyTheme(nextTheme);
-  storageSet(THEME_KEY, nextTheme);
+  localStorage.setItem(THEME_KEY, nextTheme);
   saveSettings({ ...loadSettings(), theme: nextTheme });
 });
 
@@ -1235,27 +1210,29 @@ customerDefault?.addEventListener("input", () => {
   saveSettings(nextSettings);
 });
 
-historyDisabledSwitch?.addEventListener("change", () => {
-  const nextSettings = {
-    ...loadSettings(),
-    historyDisabled: historyDisabledSwitch.checked
-  };
-  applyHistorySettings(nextSettings);
-  saveSettings(nextSettings);
-  renderHistory();
-});
-
 resetSettingsBtn?.addEventListener("click", async () => {
   if (!await showConfirm("Сбросить все настройки приложения?", "Сбросить")) return;
-  storageRemove(SETTINGS_KEY);
-  storageSet(THEME_KEY, defaultSettings.theme);
+  localStorage.removeItem(SETTINGS_KEY);
+  localStorage.setItem(THEME_KEY, defaultSettings.theme);
   applyTheme(defaultSettings.theme);
   applyDateMode(defaultSettings.dateMode);
   if (customerInput) customerInput.value = "";
   applyCustomerSettings(defaultSettings);
-  applyHistorySettings(defaultSettings);
-  renderHistory();
   showToast("Настройки сброшены", "success");
+});
+
+document.body.classList.add("loading");
+const appLoadStartedAt = Date.now();
+window.addEventListener("load", () => {
+  const loadingScreen = document.getElementById("loadingScreen");
+  const minVisibleMs = 2500;
+  const elapsed = Date.now() - appLoadStartedAt;
+  const waitMs = Math.max(0, minVisibleMs - elapsed);
+
+  setTimeout(() => {
+    loadingScreen?.classList.add("hidden");
+    document.body.classList.remove("loading");
+  }, waitMs);
 });
 
 let lastScrollY = window.scrollY;
@@ -1316,7 +1293,7 @@ function syncBasisAvailabilityForSystem(systemValue) {
     // по чём размеры
 $("#basis").onclick=e=>{
   const p=e.target.closest(".pillr");
-  if(!p || p.classList.contains("disabled"))return;
+  if(!p)return;
   $$(".pillr").forEach(x=>x.classList.remove("active"));
   p.classList.add("active");
 };
@@ -1349,30 +1326,36 @@ function render() {
   }
 
   const sortMode = $("#sortSelect").value;
-  let displayRows = rows.map((row, index) => ({ row, index }));
+  let displayRows = [...rows];
 
   if (sortMode === "system") {
     displayRows.sort((a, b) => {
-      const aIndex = systemOrder.indexOf(a.row.system);
-      const bIndex = systemOrder.indexOf(b.row.system);
+      const aIndex = systemOrder.indexOf(a.system);
+      const bIndex = systemOrder.indexOf(b.system);
       if (aIndex === -1 && bIndex === -1) return 0;
       if (aIndex === -1) return 1;
       if (bIndex === -1) return -1;
       return aIndex - bIndex;
     });
   } else if (sortMode === "width") {
-    displayRows.sort((a, b) => a.row.width - b.row.width);
+    displayRows.sort((a, b) => a.width - b.width);
   } else if (sortMode === "color") {
-    displayRows.sort((a, b) => a.row.color.localeCompare(b.row.color, 'ru', { sensitivity: 'base' }));
+    displayRows.sort((a, b) => a.color.localeCompare(b.color, 'ru', { sensitivity: 'base' }));
   }
 
-  displayRows.forEach(({ row: r, index }, i) => {
+  displayRows.forEach((r, i) => {
     const tr = document.createElement("tr");
     tr.innerHTML = `<td>${i + 1}</td><td>${r.system}</td><td>${r.color}</td><td class=right>${r.width}</td><td class=right>${r.height}</td>
       <td><span class=tag>${r.basis}</span></td><td>${r.side}</td><td class=right>${r.qty}</td>
-      <td><button class="edit" title="Редактировать" data-i="${index}">✏️</button>
-  <button class="del" title="Удалить" data-i="${index}">✕</button></td>`;
+      <td><button class="edit" title="Редактировать" data-i="${i}">✏️</button>
+  <button class="del" title="Удалить" data-i="${i}">✕</button></td>`;
     tb.appendChild(tr);
+  });
+
+  $$("#tbody .del").forEach(b => b.onclick = () => {
+    const index = b.dataset.i;
+    rows.splice(index, 1);
+    render();
   });
 }
 
@@ -1382,72 +1365,9 @@ $("#sortSelect").addEventListener("change", () => {
 });
 
 
-function resetOrderForm() {
-  $("#systemInput").value = "";
-  $("#color").value = "";
-  $("#width").value = "";
-  $("#height").value = "";
-  $("#qty").value = "";
-  syncBasisAvailabilityForSystem("");
-
-  const systemToggle = $(".dropdown-toggle");
-  if (systemToggle) {
-    systemToggle.textContent = "Выберите систему";
-    delete systemToggle.dataset.value;
-  }
-
-  $$("#basis .pillr").forEach(el => el.classList.remove("active"));
-  const defaultBasis = document.querySelector('#basis .pillr:not(.disabled)');
-  if (defaultBasis) defaultBasis.classList.add("active");
-
-  $$("#sideGroup .pill").forEach(el => el.classList.remove("active"));
-}
-
-function fillFormFromRow(item) {
-  if (!item) return;
-
-  $("#systemInput").value = item.system;
-  $(".dropdown-toggle").textContent = item.system;
-  syncBasisAvailabilityForSystem(item.system);
-
-  $("#color").value = item.color;
-  $("#width").value = item.width;
-  $("#height").value = item.height;
-  $("#qty").value = item.qty;
-
-  $$("#basis .pillr").forEach(el => el.classList.remove("active"));
-  const basisEl = $(`#basis .pillr[data-val="${item.basis}"]`);
-  if (basisEl && !basisEl.classList.contains("disabled")) basisEl.classList.add("active");
-
-  $$("#sideGroup .pill").forEach(el => el.classList.remove("active"));
-  const sideEl = $(`#sideGroup .pill[data-val="${item.side}"]`);
-  if (sideEl) sideEl.classList.add("active");
-}
-
-$("#tbody").addEventListener("click", (event) => {
-  const actionButton = event.target.closest("button[data-i]");
-  if (!actionButton) return;
-
-  const index = Number(actionButton.dataset.i);
-  if (Number.isNaN(index) || !rows[index]) return;
-
-  if (actionButton.classList.contains("del")) {
-    rows.splice(index, 1);
-    render();
-    return;
-  }
-
-  if (actionButton.classList.contains("edit")) {
-    const item = rows[index];
-    fillFormFromRow(item);
-    rows.splice(index, 1);
-    render();
-  }
-});
-
 // кнопки
 
-$("#addBtn").onclick = () => {
+   $("#addBtn").onclick = () => {
   const color = $("#color").value.trim();
   const w = parseFloat($("#width").value.replace(",", "."));
   const h = parseFloat($("#height").value.replace(",", "."));
@@ -1477,30 +1397,46 @@ $("#orderInfo").style.display = "block";
     side,
     qty: q
   });
-  render();
-  resetOrderForm();
-};
+     render();
 
+ // Очистить всё
 $("#clearBtn").onclick = async () => {
   const hasTableData = rows.length > 0;
   const hasFormData = $("#date").value || $("#numb").value || $("#customer").value ||
                       $("#systemInput").value || $("#color").value ||
                       $("#width").value || $("#height").value || $("#qty").value || $("#notes").value;
 
-  if (!hasTableData && !hasFormData) return;
+  if (!hasTableData && !hasFormData) return; // ничего не заполнено
 
   if (await showConfirm("Очистить все данные заказа и таблицу?", "Очистить")) {
     const settings = loadSettings();
 
+    // Очистить таблицу
     rows = [];
     render();
 
+    // Очистить форму
     $("#date").value = settings.dateMode === "auto" ? getTodayISODate() : "";
     $("#numb").value = "";
     $("#customer").value = settings.customerAutofillEnabled ? settings.defaultCustomer : "";
+    $("#systemInput").value = "";
+    syncBasisAvailabilityForSystem("");
+    $("#color").value = "";
+    $("#width").value = "";
+    $("#height").value = "";
+    $("#qty").value = "";
     $("#notes").value = "";
-    resetOrderForm();
 
+    // Сброс выпадающего списка "система"
+    const toggle = $(".dropdown-toggle");
+    toggle.textContent = "Выберите систему";
+    delete toggle.dataset.value;
+
+    // Сброс активных плашек
+    $$("#basis .pillr").forEach(el => el.classList.remove("active"));
+    $$("#sideGroup .pill").forEach(el => el.classList.remove("active"));
+
+    // Скрыть отображение информации о заказе
     $("#orderInfo").style.display = "none";
     $("#dateNumberDisplay").textContent = "";
     $("#orderNumberDisplay").textContent = "";
@@ -1508,7 +1444,60 @@ $("#clearBtn").onclick = async () => {
   }
 };
 
-resetOrderForm();
+
+  render();
+
+       $$("#tbody .edit").forEach(b => b.onclick = () => {
+    const index = b.dataset.i;
+    const item = rows[index];
+
+    // Заполняем форму значениями из строки
+    $("#systemInput").value = item.system;
+    $(".dropdown-toggle").textContent = item.system;
+    syncBasisAvailabilityForSystem(item.system);
+
+    $("#color").value = item.color;
+    $("#width").value = item.width;
+    $("#height").value = item.height;
+    $("#qty").value = item.qty;
+
+    // Сброс и выбор плашек
+    $$("#basis .pillr").forEach(el => el.classList.remove("active"));
+    const basisEl = $(`#basis .pillr[data-val="${item.basis}"]`);
+    if (basisEl) basisEl.classList.add("active");
+
+    $$("#sideGroup .pill").forEach(el => el.classList.remove("active"));
+    const sideEl = $(`#sideGroup .pill[data-val="${item.side}"]`);
+    if (sideEl) sideEl.classList.add("active");
+
+    // Удаляем строку
+    rows.splice(index, 1);
+    render();
+  });
+
+
+  // Сброс формы после нажатия кнопки добавить
+
+  //$("#date").value = "";
+  //$("#numb").value = "";
+  $("#width").value = "";
+  $("#height").value = "";
+  $("#qty").value = "";
+  //$("#customer").value = "";
+
+  $$("#basis .pillr").forEach(el => el.classList.remove("active"));
+  const defaultBasis = $$("#basis .pillr")[0];
+  if (defaultBasis) defaultBasis.classList.add("active");
+
+  $$("#sideGroup .pill").forEach(el => el.classList.remove("active"));
+  const defaultSide = Array.from($$("#sideGroup .pill")).find(el => el.dataset.val === "");
+  if (defaultSide) defaultSide.classList.add("active");
+
+     // Очистка отображения данных заказа после нажатия кнопки добавить
+  //$("#dateNumberDisplay").textContent = "";
+  //$("#orderNumberDisplay").textContent = "";
+
+};
 
 
 
@@ -1663,19 +1652,16 @@ $("#saveJpeg").onclick = async () => {
     pageArtifacts.push({ filename, blob, dataUrl });
   }
 
-  const settings = loadSettings();
-  if (!settings.historyDisabled) {
-    const savedAt = new Date().toLocaleString("ru-RU");
-    const historyItems = getHistoryItems();
-    pageArtifacts.forEach((artifact) => {
-      historyItems.unshift({
-        filename: artifact.filename,
-        dataUrl: artifact.dataUrl,
-        savedAt
-      });
+  const savedAt = new Date().toLocaleString("ru-RU");
+  const historyItems = getHistoryItems();
+  pageArtifacts.forEach((artifact) => {
+    historyItems.unshift({
+      filename: artifact.filename,
+      dataUrl: artifact.dataUrl,
+      savedAt
     });
-    saveHistoryItems(historyItems);
-  }
+  });
+  saveHistoryItems(historyItems);
   renderHistory();
 
   let savedToAndroid = false;
