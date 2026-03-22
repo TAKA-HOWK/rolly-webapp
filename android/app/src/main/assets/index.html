@@ -306,10 +306,10 @@ th, td {padding: 8px 6px;white-space: nowrap;}
   <div class="modal-card modal-card-lg">
     <h3 id="instructionModalTitle">Добавить свою инструкцию</h3>
     <p id="instructionModalDescription">Выберите раздел, в котором нужно сохранить новую инструкцию.</p>
-    <form class="instruction-modal-form" id="instructionForm">
+    <form class="instruction-modal-form" id="instructionForm" autocomplete="off">
       <div>
         <label for="instructionCategory">Раздел</label>
-        <select id="instructionCategory" required>
+        <select id="instructionCategory" required autocomplete="off">
           <option value="measurement">Замер</option>
           <option value="mounting">Монтаж</option>
           <option value="fabric">Ткани</option>
@@ -319,15 +319,15 @@ th, td {padding: 8px 6px;white-space: nowrap;}
       </div>
       <div>
         <label for="instructionTitle">Заголовок инструкции</label>
-        <input id="instructionTitle" type="text" placeholder="Например: Как упаковать заказ перед доставкой" maxlength="120" required>
+        <input id="instructionTitle" type="text" placeholder="Например: Как упаковать заказ перед доставкой" maxlength="120" required autocomplete="off" autocorrect="off" autocapitalize="sentences" spellcheck="false">
       </div>
       <div>
         <label for="instructionDescription">Короткое описание</label>
-        <input id="instructionDescription" type="text" placeholder="Что это за инструкция и когда пригодится" maxlength="180" required>
+        <input id="instructionDescription" type="text" placeholder="Что это за инструкция и когда пригодится" maxlength="180" required autocomplete="off" autocorrect="off" autocapitalize="sentences" spellcheck="false">
       </div>
       <div>
         <label for="instructionContent">Текст инструкции</label>
-        <textarea id="instructionContent" rows="6" placeholder="Каждый новый пункт пишите с новой строки" required></textarea>
+        <textarea id="instructionContent" rows="6" placeholder="Каждый новый пункт пишите с новой строки" required autocomplete="off" autocorrect="off" autocapitalize="sentences" spellcheck="false"></textarea>
       </div>
       <div class="modal-actions">
         <button class="btn secondary" id="instructionModalCancel" type="button">Отмена</button>
@@ -904,10 +904,6 @@ function renderCustomInstructions() {
         </div>
       </summary>
       <div class="instruction-card-body">
-        <div class="instruction-meta">
-          <span class="instruction-badge">${escapeHtml(getCategoryLabel(item.category))}</span>
-          <span class="instruction-badge">Своя инструкция</span>
-        </div>
         <ol class="instruction-steps">
           ${item.steps.map((step) => `<li>${escapeHtml(step)}</li>`).join("")}
         </ol>
@@ -917,16 +913,6 @@ function renderCustomInstructions() {
   });
 }
 
-function getCategoryLabel(category) {
-  const labels = {
-    measurement: "Замер",
-    mounting: "Монтаж",
-    fabric: "Ткани",
-    electric: "Электрика",
-    custom: "Другое"
-  };
-  return labels[category] || "Инструкция";
-}
 
 function openInstructionModal() {
   const activeFilter = instructionFilters.find((btn) => btn.classList.contains("active"))?.dataset.filter;
