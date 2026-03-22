@@ -672,6 +672,16 @@ th, td {padding: 8px 6px;white-space: nowrap;}
           <input id="customerDefault" type="text" placeholder="Например: ИП 'Успешный'" aria-label="Заказчик по умолчанию" disabled>
         </div>
       </section>
+      <section class="settings-item">
+        <div class="settings-row">
+          <h3 class="settings-title">Не сохранять историю</h3>
+          <label class="switch" aria-label="Не сохранять историю">
+            <input id="historyDisabledSwitch" type="checkbox">
+            <span class="switch-slider"></span>
+          </label>
+        </div>
+        <p class="settings-subtext">Отключает сохранение JPEG в разделе «История» на этом устройстве.</p>
+      </section>
     </div>
     <div class="settings-reset">
       <button class="btn secondary" type="button" id="resetSettingsBtn">Сбросить все настройки</button>
@@ -841,6 +851,14 @@ function toggleHistoryLightbox(dataUrl) {
 
 function renderHistory() {
   if (!historyGrid || !historyEmpty) return;
+  const settings = loadSettings();
+  if (settings.historyDisabled) {
+    historyGrid.innerHTML = "";
+    historyEmpty.textContent = "Сохранение истории отключено в настройках.";
+    historyEmpty.style.display = "block";
+    return;
+  }
+  historyEmpty.textContent = "История пустая. Сохраните заказ в JPEG, чтобы он появился здесь.";
   const items = getHistoryItems();
   historyGrid.innerHTML = "";
   historyEmpty.style.display = items.length ? "none" : "block";
@@ -1088,13 +1106,15 @@ const dateAutoSwitch = document.getElementById("dateAutoSwitch");
 const customerInput = document.getElementById("customer");
 const customerAutofill = document.getElementById("customerAutofill");
 const customerDefault = document.getElementById("customerDefault");
+const historyDisabledSwitch = document.getElementById("historyDisabledSwitch");
 const resetSettingsBtn = document.getElementById("resetSettingsBtn");
 
 const defaultSettings = {
   theme: "light",
   dateMode: "manual",
   customerAutofillEnabled: false,
-  defaultCustomer: ""
+  defaultCustomer: "",
+  historyDisabled: false
 };
 
 function getTodayISODate() {
@@ -1114,7 +1134,8 @@ function loadSettings() {
       theme: parsed?.theme === "dark" ? "dark" : "light",
       dateMode: parsed?.dateMode === "auto" ? "auto" : "manual",
       customerAutofillEnabled: Boolean(parsed?.customerAutofillEnabled),
-      defaultCustomer: typeof parsed?.defaultCustomer === "string" ? parsed.defaultCustomer : ""
+      defaultCustomer: typeof parsed?.defaultCustomer === "string" ? parsed.defaultCustomer : "",
+      historyDisabled: Boolean(parsed?.historyDisabled)
     };
   } catch {
     return { ...defaultSettings };
@@ -1153,12 +1174,17 @@ function applyCustomerSettings(settings) {
   }
 }
 
+function applyHistorySettings(settings) {
+  if (historyDisabledSwitch) historyDisabledSwitch.checked = settings.historyDisabled;
+}
+
 const savedSettings = loadSettings();
 const storedTheme = localStorage.getItem(THEME_KEY);
 const initialTheme = savedSettings.theme || (storedTheme === "dark" ? "dark" : "light");
 applyTheme(initialTheme);
 applyDateMode(savedSettings.dateMode);
 applyCustomerSettings(savedSettings);
+applyHistorySettings(savedSettings);
 
 themeSwitch?.addEventListener("change", () => {
   const nextTheme = themeSwitch.checked ? "dark" : "light";
@@ -1196,6 +1222,16 @@ customerDefault?.addEventListener("input", () => {
   saveSettings(nextSettings);
 });
 
+historyDisabledSwitch?.addEventListener("change", () => {
+  const nextSettings = {
+    ...loadSettings(),
+    historyDisabled: historyDisabledSwitch.checked
+  };
+  applyHistorySettings(nextSettings);
+  saveSettings(nextSettings);
+  renderHistory();
+});
+
 resetSettingsBtn?.addEventListener("click", async () => {
   if (!await showConfirm("Сбросить все настройки приложения?", "Сбросить")) return;
   localStorage.removeItem(SETTINGS_KEY);
@@ -1204,6 +1240,8 @@ resetSettingsBtn?.addEventListener("click", async () => {
   applyDateMode(defaultSettings.dateMode);
   if (customerInput) customerInput.value = "";
   applyCustomerSettings(defaultSettings);
+  applyHistorySettings(defaultSettings);
+  renderHistory();
   showToast("Настройки сброшены", "success");
 });
 
@@ -1638,16 +1676,19 @@ $("#saveJpeg").onclick = async () => {
     pageArtifacts.push({ filename, blob, dataUrl });
   }
 
-  const savedAt = new Date().toLocaleString("ru-RU");
-  const historyItems = getHistoryItems();
-  pageArtifacts.forEach((artifact) => {
-    historyItems.unshift({
-      filename: artifact.filename,
-      dataUrl: artifact.dataUrl,
-      savedAt
+  const settings = loadSettings();
+  if (!settings.historyDisabled) {
+    const savedAt = new Date().toLocaleString("ru-RU");
+    const historyItems = getHistoryItems();
+    pageArtifacts.forEach((artifact) => {
+      historyItems.unshift({
+        filename: artifact.filename,
+        dataUrl: artifact.dataUrl,
+        savedAt
+      });
     });
-  });
-  saveHistoryItems(historyItems);
+    saveHistoryItems(historyItems);
+  }
   renderHistory();
 
   let savedToAndroid = false;
