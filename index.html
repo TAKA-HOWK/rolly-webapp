@@ -1317,7 +1317,7 @@ function syncBasisAvailabilityForSystem(systemValue) {
     // по чём размеры
 $("#basis").onclick=e=>{
   const p=e.target.closest(".pillr");
-  if(!p)return;
+  if(!p || p.classList.contains("disabled"))return;
   $$(".pillr").forEach(x=>x.classList.remove("active"));
   p.classList.add("active");
 };
@@ -1350,36 +1350,30 @@ function render() {
   }
 
   const sortMode = $("#sortSelect").value;
-  let displayRows = [...rows];
+  let displayRows = rows.map((row, index) => ({ row, index }));
 
   if (sortMode === "system") {
     displayRows.sort((a, b) => {
-      const aIndex = systemOrder.indexOf(a.system);
-      const bIndex = systemOrder.indexOf(b.system);
+      const aIndex = systemOrder.indexOf(a.row.system);
+      const bIndex = systemOrder.indexOf(b.row.system);
       if (aIndex === -1 && bIndex === -1) return 0;
       if (aIndex === -1) return 1;
       if (bIndex === -1) return -1;
       return aIndex - bIndex;
     });
   } else if (sortMode === "width") {
-    displayRows.sort((a, b) => a.width - b.width);
+    displayRows.sort((a, b) => a.row.width - b.row.width);
   } else if (sortMode === "color") {
-    displayRows.sort((a, b) => a.color.localeCompare(b.color, 'ru', { sensitivity: 'base' }));
+    displayRows.sort((a, b) => a.row.color.localeCompare(b.row.color, 'ru', { sensitivity: 'base' }));
   }
 
-  displayRows.forEach((r, i) => {
+  displayRows.forEach(({ row: r, index }, i) => {
     const tr = document.createElement("tr");
     tr.innerHTML = `<td>${i + 1}</td><td>${r.system}</td><td>${r.color}</td><td class=right>${r.width}</td><td class=right>${r.height}</td>
       <td><span class=tag>${r.basis}</span></td><td>${r.side}</td><td class=right>${r.qty}</td>
-      <td><button class="edit" title="Редактировать" data-i="${i}">✏️</button>
-  <button class="del" title="Удалить" data-i="${i}">✕</button></td>`;
+      <td><button class="edit" title="Редактировать" data-i="${index}">✏️</button>
+  <button class="del" title="Удалить" data-i="${index}">✕</button></td>`;
     tb.appendChild(tr);
-  });
-
-  $$("#tbody .del").forEach(b => b.onclick = () => {
-    const index = b.dataset.i;
-    rows.splice(index, 1);
-    render();
   });
 }
 
@@ -1389,9 +1383,72 @@ $("#sortSelect").addEventListener("change", () => {
 });
 
 
+function resetOrderForm() {
+  $("#systemInput").value = "";
+  $("#color").value = "";
+  $("#width").value = "";
+  $("#height").value = "";
+  $("#qty").value = "";
+  syncBasisAvailabilityForSystem("");
+
+  const systemToggle = $(".dropdown-toggle");
+  if (systemToggle) {
+    systemToggle.textContent = "Выберите систему";
+    delete systemToggle.dataset.value;
+  }
+
+  $$("#basis .pillr").forEach(el => el.classList.remove("active"));
+  const defaultBasis = document.querySelector('#basis .pillr:not(.disabled)');
+  if (defaultBasis) defaultBasis.classList.add("active");
+
+  $$("#sideGroup .pill").forEach(el => el.classList.remove("active"));
+}
+
+function fillFormFromRow(item) {
+  if (!item) return;
+
+  $("#systemInput").value = item.system;
+  $(".dropdown-toggle").textContent = item.system;
+  syncBasisAvailabilityForSystem(item.system);
+
+  $("#color").value = item.color;
+  $("#width").value = item.width;
+  $("#height").value = item.height;
+  $("#qty").value = item.qty;
+
+  $$("#basis .pillr").forEach(el => el.classList.remove("active"));
+  const basisEl = $(`#basis .pillr[data-val="${item.basis}"]`);
+  if (basisEl && !basisEl.classList.contains("disabled")) basisEl.classList.add("active");
+
+  $$("#sideGroup .pill").forEach(el => el.classList.remove("active"));
+  const sideEl = $(`#sideGroup .pill[data-val="${item.side}"]`);
+  if (sideEl) sideEl.classList.add("active");
+}
+
+$("#tbody").addEventListener("click", (event) => {
+  const actionButton = event.target.closest("button[data-i]");
+  if (!actionButton) return;
+
+  const index = Number(actionButton.dataset.i);
+  if (Number.isNaN(index) || !rows[index]) return;
+
+  if (actionButton.classList.contains("del")) {
+    rows.splice(index, 1);
+    render();
+    return;
+  }
+
+  if (actionButton.classList.contains("edit")) {
+    const item = rows[index];
+    fillFormFromRow(item);
+    rows.splice(index, 1);
+    render();
+  }
+});
+
 // кнопки
 
-   $("#addBtn").onclick = () => {
+$("#addBtn").onclick = () => {
   const color = $("#color").value.trim();
   const w = parseFloat($("#width").value.replace(",", "."));
   const h = parseFloat($("#height").value.replace(",", "."));
@@ -1421,46 +1478,30 @@ $("#orderInfo").style.display = "block";
     side,
     qty: q
   });
-     render();
+  render();
+  resetOrderForm();
+};
 
- // Очистить всё
 $("#clearBtn").onclick = async () => {
   const hasTableData = rows.length > 0;
   const hasFormData = $("#date").value || $("#numb").value || $("#customer").value ||
                       $("#systemInput").value || $("#color").value ||
                       $("#width").value || $("#height").value || $("#qty").value || $("#notes").value;
 
-  if (!hasTableData && !hasFormData) return; // ничего не заполнено
+  if (!hasTableData && !hasFormData) return;
 
   if (await showConfirm("Очистить все данные заказа и таблицу?", "Очистить")) {
     const settings = loadSettings();
 
-    // Очистить таблицу
     rows = [];
     render();
 
-    // Очистить форму
     $("#date").value = settings.dateMode === "auto" ? getTodayISODate() : "";
     $("#numb").value = "";
     $("#customer").value = settings.customerAutofillEnabled ? settings.defaultCustomer : "";
-    $("#systemInput").value = "";
-    syncBasisAvailabilityForSystem("");
-    $("#color").value = "";
-    $("#width").value = "";
-    $("#height").value = "";
-    $("#qty").value = "";
     $("#notes").value = "";
+    resetOrderForm();
 
-    // Сброс выпадающего списка "система"
-    const toggle = $(".dropdown-toggle");
-    toggle.textContent = "Выберите систему";
-    delete toggle.dataset.value;
-
-    // Сброс активных плашек
-    $$("#basis .pillr").forEach(el => el.classList.remove("active"));
-    $$("#sideGroup .pill").forEach(el => el.classList.remove("active"));
-
-    // Скрыть отображение информации о заказе
     $("#orderInfo").style.display = "none";
     $("#dateNumberDisplay").textContent = "";
     $("#orderNumberDisplay").textContent = "";
@@ -1468,60 +1509,7 @@ $("#clearBtn").onclick = async () => {
   }
 };
 
-
-  render();
-
-       $$("#tbody .edit").forEach(b => b.onclick = () => {
-    const index = b.dataset.i;
-    const item = rows[index];
-
-    // Заполняем форму значениями из строки
-    $("#systemInput").value = item.system;
-    $(".dropdown-toggle").textContent = item.system;
-    syncBasisAvailabilityForSystem(item.system);
-
-    $("#color").value = item.color;
-    $("#width").value = item.width;
-    $("#height").value = item.height;
-    $("#qty").value = item.qty;
-
-    // Сброс и выбор плашек
-    $$("#basis .pillr").forEach(el => el.classList.remove("active"));
-    const basisEl = $(`#basis .pillr[data-val="${item.basis}"]`);
-    if (basisEl) basisEl.classList.add("active");
-
-    $$("#sideGroup .pill").forEach(el => el.classList.remove("active"));
-    const sideEl = $(`#sideGroup .pill[data-val="${item.side}"]`);
-    if (sideEl) sideEl.classList.add("active");
-
-    // Удаляем строку
-    rows.splice(index, 1);
-    render();
-  });
-
-
-  // Сброс формы после нажатия кнопки добавить
-
-  //$("#date").value = "";
-  //$("#numb").value = "";
-  $("#width").value = "";
-  $("#height").value = "";
-  $("#qty").value = "";
-  //$("#customer").value = "";
-
-  $$("#basis .pillr").forEach(el => el.classList.remove("active"));
-  const defaultBasis = $$("#basis .pillr")[0];
-  if (defaultBasis) defaultBasis.classList.add("active");
-
-  $$("#sideGroup .pill").forEach(el => el.classList.remove("active"));
-  const defaultSide = Array.from($$("#sideGroup .pill")).find(el => el.dataset.val === "");
-  if (defaultSide) defaultSide.classList.add("active");
-
-     // Очистка отображения данных заказа после нажатия кнопки добавить
-  //$("#dateNumberDisplay").textContent = "";
-  //$("#orderNumberDisplay").textContent = "";
-
-};
+resetOrderForm();
 
 
 
