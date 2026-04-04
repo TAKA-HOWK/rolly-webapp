@@ -1568,6 +1568,24 @@ function blobFromCanvas(canvas, quality) {
   });
 }
 
+function dataURLToBlob(dataUrl) {
+  if (!dataUrl || typeof dataUrl !== "string") return null;
+  const parts = dataUrl.split(",");
+  if (parts.length !== 2) return null;
+
+  const mimeMatch = parts[0].match(/data:(.*?);base64/);
+  const mime = mimeMatch?.[1] || "image/jpeg";
+  const binary = atob(parts[1]);
+  const length = binary.length;
+  const bytes = new Uint8Array(length);
+
+  for (let i = 0; i < length; i += 1) {
+    bytes[i] = binary.charCodeAt(i);
+  }
+
+  return new Blob([bytes], { type: mime });
+}
+
 function tryAutoDownloadBlob(blob, filename) {
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
