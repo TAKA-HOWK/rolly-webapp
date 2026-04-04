@@ -125,9 +125,12 @@
   .instruction-modal-form{display:grid;gap:14px}
   .history-header{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px}
   .history-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:10px}
-  .history-card{border:1px solid var(--border);border-radius:12px;overflow:hidden;background:var(--control-bg);cursor:pointer}
+  .history-card{border:1px solid var(--border);border-radius:12px;overflow:hidden;background:var(--control-bg)}
+  .history-preview{display:block;width:100%;padding:0;border:none;background:transparent;cursor:pointer;text-align:left}
   .history-card img{display:block;width:100%;aspect-ratio:4/3;object-fit:cover;background:#fff}
   .history-meta{padding:8px 10px;font-size:12px;color:var(--muted)}
+  .history-actions{display:flex;justify-content:flex-end;padding:0 10px 10px}
+  .history-download{font-size:12px;padding:7px 10px;border-radius:8px}
   .history-empty{margin:0;color:var(--muted);font-size:14px}
   .settings-list{display:grid;gap:2px;border:1px solid var(--border);border-radius:16px;background:var(--control-bg);overflow:hidden}
   .settings-item{padding:14px 12px;border-bottom:1px solid var(--border);background:var(--control-bg)}
@@ -147,6 +150,7 @@
   .history-lightbox{position:fixed;inset:0;background:rgba(0,0,0,.88);display:none;align-items:center;justify-content:center;padding:14px;z-index:1700;cursor:zoom-out}
   .history-lightbox.show{display:flex}
   .history-lightbox img{max-width:100%;max-height:100%;object-fit:contain;border-radius:8px}
+  .history-lightbox-download{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);z-index:1}
   .toast-viewport{
     position:fixed;
     right:14px;
@@ -681,6 +685,7 @@ th, td {padding: 8px 6px;white-space: nowrap;}
 
 <div id="historyLightbox" class="history-lightbox" aria-label="Просмотр изображения">
   <img id="historyFullscreenImage" src="" alt="Заказ в полном размере">
+  <button type="button" id="historyDownloadBtn" class="btn primary history-lightbox-download">Скачать JPEG</button>
 </div>
 
 <nav class="bottom-dock" aria-label="Быстрая навигация">
@@ -812,6 +817,7 @@ const historyGrid = document.getElementById("historyGrid");
 const historyEmpty = document.getElementById("historyEmpty");
 const historyLightbox = document.getElementById("historyLightbox");
 const historyFullscreenImage = document.getElementById("historyFullscreenImage");
+const historyDownloadBtn = document.getElementById("historyDownloadBtn");
 const HISTORY_KEY = "rolly-order-history";
 const CUSTOM_INSTRUCTIONS_KEY = "rolly-custom-instructions";
 
@@ -828,13 +834,39 @@ function saveHistoryItems(items) {
   localStorage.setItem(HISTORY_KEY, JSON.stringify(items));
 }
 
-function toggleHistoryLightbox(dataUrl) {
+function getHistoryFilename(item, index = 1) {
+  return item?.filename || `rolshtory_history_${index}.jpg`;
+}
+
+async function saveHistoryItemJpeg(item, index = 1) {
+  if (!item?.dataUrl) return;
+  const filename = getHistoryFilename(item, index);
+
+  let savedToAndroid = false;
+  if (window.AndroidBridge && typeof window.AndroidBridge.saveImage === "function") {
+    savedToAndroid = await tryAndroidSaveImage(item.dataUrl, filename);
+  }
+
+  if (!savedToAndroid) {
+    const blob = dataURLToBlob(item.dataUrl);
+    if (!blob) {
+      showToast("Не удалось подготовить JPEG для сохранения", "error", 4200);
+      return;
+    }
+    tryAutoDownloadBlob(blob, filename);
+  }
+
+  showToast(`JPEG сохранён: ${filename}`, "success");
+}
+
+function toggleHistoryLightbox(dataUrl, filename) {
   const isVisible = historyLightbox?.classList.contains("show");
   if (isVisible && historyFullscreenImage?.src === dataUrl) {
     historyLightbox?.classList.remove("show");
     return;
   }
   if (historyFullscreenImage) historyFullscreenImage.src = dataUrl;
+  if (historyDownloadBtn) historyDownloadBtn.dataset.filename = filename || "";
   historyLightbox?.classList.add("show");
 }
 
@@ -844,15 +876,27 @@ function renderHistory() {
   historyGrid.innerHTML = "";
   historyEmpty.style.display = items.length ? "none" : "block";
 
-  items.forEach((item) => {
-    const card = document.createElement("button");
-    card.type = "button";
+  items.forEach((item, index) => {
+    const card = document.createElement("article");
     card.className = "history-card";
     card.innerHTML = `
-      <img src="${item.dataUrl}" alt="${item.filename}">
-      <div class="history-meta">${item.savedAt}</div>
+      <button type="button" class="history-preview" aria-label="Открыть заказ ${item.savedAt}">
+        <img src="${item.dataUrl}" alt="${item.filename}">
+        <div class="history-meta">${item.savedAt}</div>
+      </button>
+      <div class="history-actions">
+        <button type="button" class="btn secondary history-download">Скачать JPEG</button>
+      </div>
     `;
-    card.addEventListener("click", () => toggleHistoryLightbox(item.dataUrl));
+
+    card.querySelector(".history-preview")?.addEventListener("click", () =>
+      toggleHistoryLightbox(item.dataUrl, getHistoryFilename(item, index + 1))
+    );
+
+    card.querySelector(".history-download")?.addEventListener("click", () =>
+      saveHistoryItemJpeg(item, index + 1)
+    );
+
     historyGrid.appendChild(card);
   });
 }
@@ -1077,8 +1121,19 @@ instructionsList?.addEventListener("click", async (event) => {
 renderCustomInstructions();
 filterInstructions();
 
-historyLightbox?.addEventListener("click", () => {
-  historyLightbox.classList.remove("show");
+historyLightbox?.addEventListener("click", (event) => {
+  if (event.target === historyLightbox || event.target === historyFullscreenImage) {
+    historyLightbox.classList.remove("show");
+  }
+});
+
+historyDownloadBtn?.addEventListener("click", async (event) => {
+  event.stopPropagation();
+  if (!historyFullscreenImage?.src) return;
+  await saveHistoryItemJpeg({
+    dataUrl: historyFullscreenImage.src,
+    filename: historyDownloadBtn.dataset.filename || "rolshtory_history.jpg"
+  });
 });
 
 document.getElementById("clearHistoryBtn")?.addEventListener("click", async () => {
