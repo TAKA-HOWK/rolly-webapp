@@ -672,6 +672,15 @@ th, td {padding: 8px 6px;white-space: nowrap;}
           <input id="customerDefault" type="text" placeholder="Например: ИП 'Успешный'" aria-label="Заказчик по умолчанию" disabled>
         </div>
       </section>
+      <section class="settings-item">
+        <div class="settings-row">
+          <h3 class="settings-title">Не сохранять историю</h3>
+          <label class="switch" aria-label="Не сохранять историю">
+            <input id="historySaveSwitch" type="checkbox">
+            <span class="switch-slider"></span>
+          </label>
+        </div>
+      </section>
     </div>
     <div class="settings-reset">
       <button class="btn secondary" type="button" id="resetSettingsBtn">Сбросить все настройки</button>
@@ -1102,13 +1111,15 @@ const dateAutoSwitch = document.getElementById("dateAutoSwitch");
 const customerInput = document.getElementById("customer");
 const customerAutofill = document.getElementById("customerAutofill");
 const customerDefault = document.getElementById("customerDefault");
+const historySaveSwitch = document.getElementById("historySaveSwitch");
 const resetSettingsBtn = document.getElementById("resetSettingsBtn");
 
 const defaultSettings = {
   theme: "light",
   dateMode: "manual",
   customerAutofillEnabled: false,
-  defaultCustomer: ""
+  defaultCustomer: "",
+  disableHistorySaving: false
 };
 
 function getTodayISODate() {
@@ -1128,7 +1139,8 @@ function loadSettings() {
       theme: parsed?.theme === "dark" ? "dark" : "light",
       dateMode: parsed?.dateMode === "auto" ? "auto" : "manual",
       customerAutofillEnabled: Boolean(parsed?.customerAutofillEnabled),
-      defaultCustomer: typeof parsed?.defaultCustomer === "string" ? parsed.defaultCustomer : ""
+      defaultCustomer: typeof parsed?.defaultCustomer === "string" ? parsed.defaultCustomer : "",
+      disableHistorySaving: Boolean(parsed?.disableHistorySaving)
     };
   } catch {
     return { ...defaultSettings };
@@ -1167,12 +1179,17 @@ function applyCustomerSettings(settings) {
   }
 }
 
+function applyHistorySavingSettings(settings) {
+  if (historySaveSwitch) historySaveSwitch.checked = settings.disableHistorySaving;
+}
+
 const savedSettings = loadSettings();
 const storedTheme = localStorage.getItem(THEME_KEY);
 const initialTheme = savedSettings.theme || (storedTheme === "dark" ? "dark" : "light");
 applyTheme(initialTheme);
 applyDateMode(savedSettings.dateMode);
 applyCustomerSettings(savedSettings);
+applyHistorySavingSettings(savedSettings);
 
 themeSwitch?.addEventListener("change", () => {
   const nextTheme = themeSwitch.checked ? "dark" : "light";
@@ -1210,6 +1227,14 @@ customerDefault?.addEventListener("input", () => {
   saveSettings(nextSettings);
 });
 
+historySaveSwitch?.addEventListener("change", () => {
+  const nextSettings = {
+    ...loadSettings(),
+    disableHistorySaving: historySaveSwitch.checked
+  };
+  saveSettings(nextSettings);
+});
+
 resetSettingsBtn?.addEventListener("click", async () => {
   if (!await showConfirm("Сбросить все настройки приложения?", "Сбросить")) return;
   localStorage.removeItem(SETTINGS_KEY);
@@ -1218,6 +1243,7 @@ resetSettingsBtn?.addEventListener("click", async () => {
   applyDateMode(defaultSettings.dateMode);
   if (customerInput) customerInput.value = "";
   applyCustomerSettings(defaultSettings);
+  applyHistorySavingSettings(defaultSettings);
   showToast("Настройки сброшены", "success");
 });
 
@@ -1652,17 +1678,20 @@ $("#saveJpeg").onclick = async () => {
     pageArtifacts.push({ filename, blob, dataUrl });
   }
 
-  const savedAt = new Date().toLocaleString("ru-RU");
-  const historyItems = getHistoryItems();
-  pageArtifacts.forEach((artifact) => {
-    historyItems.unshift({
-      filename: artifact.filename,
-      dataUrl: artifact.dataUrl,
-      savedAt
+  const settings = loadSettings();
+  if (!settings.disableHistorySaving) {
+    const savedAt = new Date().toLocaleString("ru-RU");
+    const historyItems = getHistoryItems();
+    pageArtifacts.forEach((artifact) => {
+      historyItems.unshift({
+        filename: artifact.filename,
+        dataUrl: artifact.dataUrl,
+        savedAt
+      });
     });
-  });
-  saveHistoryItems(historyItems);
-  renderHistory();
+    saveHistoryItems(historyItems);
+    renderHistory();
+  }
 
   let savedToAndroid = false;
   if (window.AndroidBridge && typeof window.AndroidBridge.saveImage === "function") {
