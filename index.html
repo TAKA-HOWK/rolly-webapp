@@ -146,11 +146,9 @@
   .switch input:checked + .switch-slider::before{transform:translateX(18px)}
   .settings-input-wrap{margin-top:10px}
   .settings-input-wrap input:disabled{opacity:.55;cursor:not-allowed}
-  .fabric-editor-card{display:grid;gap:10px;border:1px solid var(--border);border-radius:14px;padding:14px;background:linear-gradient(180deg,var(--btn-secondary-bg),var(--card))}
-  .fabric-editor-card h3{margin:0;font-size:16px}
-  .fabric-editor-card p{margin:0;color:var(--muted);font-size:13px;line-height:1.45}
-  .fabric-editor-card textarea{min-height:180px;resize:vertical;box-sizing:border-box}
-  .fabric-editor-actions{display:flex;flex-wrap:wrap;gap:8px}
+  .settings-fabric-editor{display:grid;gap:10px;margin-top:10px}
+  .settings-fabric-editor textarea{min-height:180px;resize:vertical;box-sizing:border-box}
+  .settings-fabric-actions{display:flex;flex-wrap:wrap;gap:8px}
   .settings-reset{margin-top:14px}
   .history-lightbox{position:fixed;inset:0;background:rgba(0,0,0,.88);display:none;align-items:center;justify-content:center;padding:14px;z-index:1700;cursor:zoom-out}
   .history-lightbox.show{display:flex}
@@ -705,10 +703,16 @@ th, td {padding: 8px 6px;white-space: nowrap;}
       <section class="settings-item">
         <div class="settings-row">
           <div>
-            <h3 class="settings-title">Сброс вкладки «Ткани»</h3>
-            <p class="settings-subtext">Вернуть заводской список рабочих высот тканей в справке.</p>
+            <h3 class="settings-title">Редактирование вкладки «Ткани»</h3>
+            <p class="settings-subtext">Каждая строка будет отдельным пунктом в инструкции «Рабочие высоты тканей для Uni2».</p>
           </div>
-          <button class="btn secondary" type="button" id="resetFabricHeightsBtn">Сбросить до заводских</button>
+        </div>
+        <div class="settings-fabric-editor">
+          <textarea id="fabricHeightsEditor" rows="10" aria-label="Список рабочих высот тканей"></textarea>
+          <div class="settings-fabric-actions">
+            <button class="btn primary" type="button" id="saveFabricHeightsBtn">Сохранить ткани</button>
+            <button class="btn secondary" type="button" id="resetFabricHeightsBtn">Сбросить ткани до заводских</button>
+          </div>
         </div>
       </section>
     </div>
