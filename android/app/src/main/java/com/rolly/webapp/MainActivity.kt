@@ -47,12 +47,40 @@ class MainActivity : AppCompatActivity() {
 
     private class AndroidBridge(private val context: android.content.Context) {
         @JavascriptInterface
+        fun shareImage(dataUrl: String, filename: String): Boolean {
+            return try {
+                val bytes = decodeDataUrl(dataUrl) ?: return false
+                val safeFilename = sanitizeFilename(filename)
+                val outFile = File(context.cacheDir, safeFilename)
+                FileOutputStream(outFile).use { output ->
+                    output.write(bytes)
+                    output.flush()
+                }
+
+                val uri = androidx.core.content.FileProvider.getUriForFile(
+                    context,
+                    context.packageName + ".fileprovider",
+                    outFile
+                )
+                val intent = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
+                    type = "image/jpeg"
+                    putExtra(android.content.Intent.EXTRA_STREAM, uri)
+                    putExtra(android.content.Intent.EXTRA_TEXT, "Заказ Rolly")
+                    addFlags(android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                }
+                val chooser = android.content.Intent.createChooser(intent, "Отправить JPEG")
+                chooser.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
+                context.startActivity(chooser)
+                true
+            } catch (_: Exception) {
+                false
+            }
+        }
+
+        @JavascriptInterface
         fun saveImage(dataUrl: String, filename: String): Boolean {
             return try {
-                val base64 = dataUrl.substringAfter(',', "")
-                if (base64.isBlank()) return false
-
-                val bytes = android.util.Base64.decode(base64, android.util.Base64.DEFAULT)
+                val bytes = decodeDataUrl(dataUrl) ?: return false
                 if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
                     saveWithMediaStore(bytes, filename)
                 } else {
@@ -63,10 +91,25 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
+        private fun decodeDataUrl(dataUrl: String): ByteArray? {
+            val base64 = dataUrl.substringAfter(',', "")
+            if (base64.isBlank()) return null
+            return android.util.Base64.decode(base64, android.util.Base64.DEFAULT)
+        }
+
+        private fun sanitizeFilename(filename: String): String {
+            val cleaned = filename.replace(Regex("[^A-Za-z0-9._-]"), "_").ifBlank { "rolshtory_history.jpg" }
+            return if (cleaned.endsWith(".jpg", ignoreCase = true) || cleaned.endsWith(".jpeg", ignoreCase = true)) {
+                cleaned
+            } else {
+                "$cleaned.jpg"
+            }
+        }
+
         private fun saveWithMediaStore(bytes: ByteArray, filename: String): Boolean {
             val resolver = context.contentResolver
             val values = android.content.ContentValues()
-            values.put(android.provider.MediaStore.Images.Media.DISPLAY_NAME, filename)
+            values.put(android.provider.MediaStore.Images.Media.DISPLAY_NAME, sanitizeFilename(filename))
             values.put(android.provider.MediaStore.Images.Media.MIME_TYPE, "image/jpeg")
             values.put(
                 android.provider.MediaStore.Images.Media.RELATIVE_PATH,
@@ -100,7 +143,7 @@ class MainActivity : AppCompatActivity() {
             val appDir = File(picturesDir, "Rolly")
             if (!appDir.exists() && !appDir.mkdirs()) return false
 
-            val outFile = File(appDir, filename)
+            val outFile = File(appDir, sanitizeFilename(filename))
             return try {
                 val fos = FileOutputStream(outFile)
                 fos.write(bytes)
