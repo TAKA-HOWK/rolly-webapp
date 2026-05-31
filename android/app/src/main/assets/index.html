@@ -1,4 +1,3 @@
-
 <!doctype html>
 <html lang="ru">
 <head>
@@ -147,6 +146,9 @@
   .switch input:checked + .switch-slider::before{transform:translateX(18px)}
   .settings-input-wrap{margin-top:10px}
   .settings-input-wrap input:disabled{opacity:.55;cursor:not-allowed}
+  .settings-fabric-editor{display:grid;gap:10px;margin-top:10px}
+  .settings-fabric-editor textarea{min-height:180px;resize:vertical;box-sizing:border-box}
+  .settings-fabric-actions{display:flex;flex-wrap:wrap;gap:8px}
   .settings-reset{margin-top:14px}
   .history-lightbox{position:fixed;inset:0;background:rgba(0,0,0,.88);display:none;align-items:center;justify-content:center;padding:14px;z-index:1700;cursor:zoom-out}
   .history-lightbox.show{display:flex}
@@ -548,7 +550,7 @@ th, td {padding: 8px 6px;white-space: nowrap;}
               <span class="instruction-badge">Uni2</span>
               <span class="instruction-badge">mini</span>
             </div>
-            <ol class="instruction-steps">
+            <ol class="instruction-steps" id="fabricHeightsList">
 <li>601-... - 2.25м</li>
 <li>602-... - 2.25м</li>
 <li>603-... - 2.25м</li>
@@ -687,6 +689,21 @@ th, td {padding: 8px 6px;white-space: nowrap;}
             <input id="historySaveSwitch" type="checkbox">
             <span class="switch-slider"></span>
           </label>
+        </div>
+      </section>
+      <section class="settings-item">
+        <div class="settings-row">
+          <div>
+            <h3 class="settings-title">Редактирование вкладки «Ткани»</h3>
+            <p class="settings-subtext">Каждая строка будет отдельным пунктом в инструкции «Рабочие высоты тканей для Uni2».</p>
+          </div>
+        </div>
+        <div class="settings-fabric-editor">
+          <textarea id="fabricHeightsEditor" rows="10" aria-label="Список рабочих высот тканей"></textarea>
+          <div class="settings-fabric-actions">
+            <button class="btn primary" type="button" id="saveFabricHeightsBtn">Сохранить ткани</button>
+            <button class="btn secondary" type="button" id="resetFabricHeightsBtn">Сбросить ткани до заводских</button>
+          </div>
         </div>
       </section>
     </div>
@@ -834,6 +851,14 @@ const historyFullscreenImage = document.getElementById("historyFullscreenImage")
 const historyDownloadBtn = document.getElementById("historyDownloadBtn");
 const HISTORY_KEY = "rolly-order-history";
 const CUSTOM_INSTRUCTIONS_KEY = "rolly-custom-instructions";
+const FABRIC_HEIGHTS_KEY = "rolly-fabric-heights";
+const fabricHeightsList = document.getElementById("fabricHeightsList");
+const fabricHeightsEditor = document.getElementById("fabricHeightsEditor");
+const saveFabricHeightsBtn = document.getElementById("saveFabricHeightsBtn");
+const resetFabricHeightsBtn = document.getElementById("resetFabricHeightsBtn");
+const defaultFabricHeights = fabricHeightsList
+  ? $$("#fabricHeightsList li").map((item) => item.textContent.trim()).filter(Boolean)
+  : [];
 
 function getHistoryItems() {
   try {
@@ -913,6 +938,32 @@ function renderHistory() {
 
     historyGrid.appendChild(card);
   });
+}
+
+function getSavedFabricHeights() {
+  try {
+    const parsed = JSON.parse(localStorage.getItem(FABRIC_HEIGHTS_KEY) || "[]");
+    return Array.isArray(parsed)
+      ? parsed.map((item) => String(item).trim()).filter(Boolean)
+      : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveFabricHeights(items) {
+  localStorage.setItem(FABRIC_HEIGHTS_KEY, JSON.stringify(items));
+}
+
+function getActiveFabricHeights() {
+  const savedItems = getSavedFabricHeights();
+  return savedItems.length ? savedItems : defaultFabricHeights;
+}
+
+function renderFabricHeights(items = getActiveFabricHeights()) {
+  if (!fabricHeightsList) return;
+  fabricHeightsList.innerHTML = items.map((item) => `<li>${escapeHtml(item)}</li>`).join("");
+  if (fabricHeightsEditor) fabricHeightsEditor.value = items.join("\n");
 }
 
 function getInstructionCards() {
@@ -1133,7 +1184,33 @@ instructionsList?.addEventListener("click", async (event) => {
 });
 
 renderCustomInstructions();
+renderFabricHeights();
 filterInstructions();
+
+saveFabricHeightsBtn?.addEventListener("click", () => {
+  const items = (fabricHeightsEditor?.value || "")
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean);
+
+  if (!items.length) {
+    showToast("Добавьте хотя бы одну строку для вкладки «Ткани»", "error");
+    return;
+  }
+
+  saveFabricHeights(items);
+  renderFabricHeights(items);
+  filterInstructions();
+  showToast("Вкладка «Ткани» обновлена", "success");
+});
+
+resetFabricHeightsBtn?.addEventListener("click", async () => {
+  if (!(await showConfirm("Сбросить вкладку «Ткани» до заводских параметров?", "Сбросить"))) return;
+  localStorage.removeItem(FABRIC_HEIGHTS_KEY);
+  renderFabricHeights(defaultFabricHeights);
+  filterInstructions();
+  showToast("Вкладка «Ткани» сброшена до заводских параметров", "success");
+});
 
 historyLightbox?.addEventListener("click", (event) => {
   if (event.target === historyLightbox || event.target === historyFullscreenImage) {
@@ -1297,12 +1374,14 @@ historySaveSwitch?.addEventListener("change", () => {
 resetSettingsBtn?.addEventListener("click", async () => {
   if (!await showConfirm("Сбросить все настройки приложения?", "Сбросить")) return;
   localStorage.removeItem(SETTINGS_KEY);
+  localStorage.removeItem(FABRIC_HEIGHTS_KEY);
   localStorage.setItem(THEME_KEY, defaultSettings.theme);
   applyTheme(defaultSettings.theme);
   applyDateMode(defaultSettings.dateMode);
   if (customerInput) customerInput.value = "";
   applyCustomerSettings(defaultSettings);
   applyHistorySavingSettings(defaultSettings);
+  renderFabricHeights(defaultFabricHeights);
   showToast("Настройки сброшены", "success");
 });
 
