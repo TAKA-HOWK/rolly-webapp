@@ -10,6 +10,7 @@ import android.webkit.WebView
 import android.webkit.WebViewClient
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import org.json.JSONArray
 import java.io.File
 import java.io.FileOutputStream
 
@@ -77,6 +78,48 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
+
+
+        @JavascriptInterface
+        fun shareImages(dataUrlsJson: String, filenamesJson: String): Boolean {
+            return try {
+                val dataUrls = JSONArray(dataUrlsJson)
+                val filenames = JSONArray(filenamesJson)
+                if (dataUrls.length() == 0) return false
+
+                val uris = ArrayList<android.net.Uri>()
+                for (index in 0 until dataUrls.length()) {
+                    val dataUrl = dataUrls.optString(index)
+                    val bytes = decodeDataUrl(dataUrl) ?: return false
+                    val filename = filenames.optString(index, "rolshtory_page_${index + 1}.jpg")
+                    val safeFilename = sanitizeFilename(filename)
+                    val outFile = File(context.cacheDir, safeFilename)
+                    FileOutputStream(outFile).use { output ->
+                        output.write(bytes)
+                        output.flush()
+                    }
+                    val uri = androidx.core.content.FileProvider.getUriForFile(
+                        context,
+                        context.packageName + ".fileprovider",
+                        outFile
+                    )
+                    uris.add(uri)
+                }
+
+                val intent = android.content.Intent(android.content.Intent.ACTION_SEND_MULTIPLE).apply {
+                    type = "image/jpeg"
+                    putParcelableArrayListExtra(android.content.Intent.EXTRA_STREAM, uris)
+                    putExtra(android.content.Intent.EXTRA_TEXT, "Заказ Rolly")
+                    addFlags(android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                }
+                val chooser = android.content.Intent.createChooser(intent, "Отправить JPEG")
+                chooser.addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
+                context.startActivity(chooser)
+                true
+            } catch (_: Exception) {
+                false
+            }
+        }
         @JavascriptInterface
         fun saveImage(dataUrl: String, filename: String): Boolean {
             return try {
