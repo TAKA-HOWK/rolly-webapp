@@ -120,6 +120,9 @@
   .instruction-steps,.instruction-checklist{margin:0;padding-left:18px;display:grid;gap:6px;color:var(--text);font-size:14px;line-height:1.45}
   .instruction-note{margin:0;padding:10px 12px;border-radius:12px;background:var(--btn-secondary-bg);color:var(--text);font-size:14px;line-height:1.45}
   .instructions-empty{margin:0;padding:14px;border:1px dashed var(--border);border-radius:14px;color:var(--muted);font-size:14px;text-align:center}
+
+  .fabric-heights-actions{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0 12px}
+  .fabric-heights-actions .btn{padding:8px 12px;font-size:13px}
   .instructions-filters-wrap{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
   .instruction-add-btn{min-width:44px;width:44px;height:44px;padding:0;border-radius:12px;font-size:28px;line-height:1;display:inline-flex;align-items:center;justify-content:center}
   .instruction-modal-form{display:grid;gap:14px}
@@ -326,6 +329,23 @@ th, td {padding: 8px 6px;white-space: nowrap;}
       <div class="modal-actions">
         <button class="btn secondary" id="instructionModalCancel" type="button">Отмена</button>
         <button class="btn primary" type="submit">Добавить инструкцию</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div id="fabricHeightsModal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="fabricHeightsModalTitle" aria-describedby="fabricHeightsModalDescription">
+  <div class="modal-card modal-card-lg">
+    <h3 id="fabricHeightsModalTitle">Редактировать рабочие высоты Uni2</h3>
+    <p id="fabricHeightsModalDescription">Укажите каждую ткань с новой строки. Эти данные сохранятся на устройстве.</p>
+    <form class="instruction-modal-form" id="fabricHeightsForm">
+      <div>
+        <label for="fabricHeightsInput">Список рабочих высот</label>
+        <textarea id="fabricHeightsInput" rows="12" placeholder="601-... - 2.25м" required></textarea>
+      </div>
+      <div class="modal-actions">
+        <button class="btn secondary" id="fabricHeightsModalCancel" type="button">Отмена</button>
+        <button class="btn primary" type="submit">Сохранить</button>
       </div>
     </form>
   </div>
@@ -547,45 +567,11 @@ th, td {padding: 8px 6px;white-space: nowrap;}
               <span class="instruction-badge">Uni2</span>
               <span class="instruction-badge">mini</span>
             </div>
-            <ol class="instruction-steps">
-<li>601-... - 2.25м</li>
-<li>602-... - 2.25м</li>
-<li>603-... - 2.25м</li>
-<li>604-... - 2.0м</li>
-<li>605-... - 1.7м</li>
-<li>607-... - 1.6м</li>
-<li>608-... - 1.3м</li>
-<li>609-... - 1.9м</li>
-<li>610-... - 1.6м</li>
-<li>611-... - 1.6м</li>
-<li>702-... - 2.3м</li>
-<li>704-... - 2.4м</li>
-<li>711-... - 2.25м</li>
-<li>720-... - 2.5м</li>
-<li>721-... - 2.5м</li>
-<li>723-... - 2.0м</li>
-<li>750-... - 1.9м</li>
-<li>770-... - 1.7м</li>
-<li>771-... - 2.4м</li>
-<li>772-... - 1.7м</li>
-<li>773-... - 1.9м</li>
-<li>774-... - 1.3м</li>
-<li>775-... - 1.7м</li>
-<li>776-... - 2.4м</li>
-<li>778-... - 1.9м</li>
-<li>779-... - 1.8м</li>
-<li>780-... - 2.05м</li>
-<li>791-... - 2.2м</li>
-<li>792-... - 2.2м</li>
-<li>793-... - 1.7м</li>
-<li>794-... - 1.3м</li>
-<li>805-... - 2.15м</li>
-<li>807-... - 2.0м</li>
-<li>900-... - 1.6м</li>
-<li>903-... - 2.25м</li>
-<li>904-... - 1.7м</li>
-<li>907-... - 1.7м</li>
-            </ol>
+            <div class="fabric-heights-actions">
+              <button class="btn secondary" type="button" id="editFabricHeightsBtn">Редактировать список</button>
+              <button class="btn secondary" type="button" id="resetFabricHeightsBtn">Сбросить до заводских</button>
+            </div>
+            <ol class="instruction-steps" id="fabricHeightsList"></ol>
             <p class="instruction-note">Подсказка: Если высота на границе допустимого значения, лучше сразу подобрать альтернативу и указать это в примечании к заказу, чтобы не потерять при передаче в работу.</p>
           </div>
         </details>
@@ -833,6 +819,53 @@ const historyFullscreenImage = document.getElementById("historyFullscreenImage")
 const historyDownloadBtn = document.getElementById("historyDownloadBtn");
 const HISTORY_KEY = "rolly-order-history";
 const CUSTOM_INSTRUCTIONS_KEY = "rolly-custom-instructions";
+const FABRIC_HEIGHTS_KEY = "rolly-fabric-heights-uni2";
+const defaultFabricHeights = [
+  "601-... - 2.25м",
+  "602-... - 2.25м",
+  "603-... - 2.25м",
+  "604-... - 2.0м",
+  "605-... - 1.7м",
+  "607-... - 1.6м",
+  "608-... - 1.3м",
+  "609-... - 1.9м",
+  "610-... - 1.6м",
+  "611-... - 1.6м",
+  "702-... - 2.3м",
+  "704-... - 2.4м",
+  "711-... - 2.25м",
+  "720-... - 2.5м",
+  "721-... - 2.5м",
+  "723-... - 2.0м",
+  "750-... - 1.9м",
+  "770-... - 1.7м",
+  "771-... - 2.4м",
+  "772-... - 1.7м",
+  "773-... - 1.9м",
+  "774-... - 1.3м",
+  "775-... - 1.7м",
+  "776-... - 2.4м",
+  "778-... - 1.9м",
+  "779-... - 1.8м",
+  "780-... - 2.05м",
+  "791-... - 2.2м",
+  "792-... - 2.2м",
+  "793-... - 1.7м",
+  "794-... - 1.3м",
+  "805-... - 2.15м",
+  "807-... - 2.0м",
+  "900-... - 1.6м",
+  "903-... - 2.25м",
+  "904-... - 1.7м",
+  "907-... - 1.7м"
+];
+const fabricHeightsModal = document.getElementById("fabricHeightsModal");
+const fabricHeightsForm = document.getElementById("fabricHeightsForm");
+const fabricHeightsInput = document.getElementById("fabricHeightsInput");
+const fabricHeightsList = document.getElementById("fabricHeightsList");
+const editFabricHeightsBtn = document.getElementById("editFabricHeightsBtn");
+const resetFabricHeightsBtn = document.getElementById("resetFabricHeightsBtn");
+const fabricHeightsModalCancel = document.getElementById("fabricHeightsModalCancel");
 
 function getHistoryItems() {
   try {
@@ -938,6 +971,40 @@ function escapeHtml(value) {
     .replaceAll(">", "&gt;")
     .replaceAll('"', "&quot;")
     .replaceAll("'", "&#39;");
+}
+
+function getFabricHeights() {
+  try {
+    const parsed = JSON.parse(localStorage.getItem(FABRIC_HEIGHTS_KEY) || "null");
+    if (Array.isArray(parsed)) {
+      const cleaned = parsed.map((item) => String(item).trim()).filter(Boolean);
+      if (cleaned.length) return cleaned;
+    }
+  } catch {
+    // Если сохранённые данные повреждены, показываем заводской список.
+  }
+  return [...defaultFabricHeights];
+}
+
+function saveFabricHeights(items) {
+  localStorage.setItem(FABRIC_HEIGHTS_KEY, JSON.stringify(items));
+}
+
+function renderFabricHeights() {
+  if (!fabricHeightsList) return;
+  fabricHeightsList.innerHTML = getFabricHeights()
+    .map((item) => `<li>${escapeHtml(item)}</li>`)
+    .join("");
+}
+
+function openFabricHeightsModal() {
+  if (fabricHeightsInput) fabricHeightsInput.value = getFabricHeights().join("\n");
+  fabricHeightsModal?.classList.add("show");
+  setTimeout(() => fabricHeightsInput?.focus(), 0);
+}
+
+function closeFabricHeightsModal() {
+  fabricHeightsModal?.classList.remove("show");
 }
 
 function renderCustomInstructions() {
@@ -1062,9 +1129,40 @@ instructionModal?.addEventListener("click", (event) => {
   if (event.target === instructionModal) closeInstructionModal();
 });
 document.addEventListener("keydown", (event) => {
-  if (event.key === "Escape" && instructionModal?.classList.contains("show")) {
-    closeInstructionModal();
+  if (event.key !== "Escape") return;
+  if (instructionModal?.classList.contains("show")) closeInstructionModal();
+  if (fabricHeightsModal?.classList.contains("show")) closeFabricHeightsModal();
+});
+
+editFabricHeightsBtn?.addEventListener("click", openFabricHeightsModal);
+fabricHeightsModalCancel?.addEventListener("click", closeFabricHeightsModal);
+fabricHeightsModal?.addEventListener("click", (event) => {
+  if (event.target === fabricHeightsModal) closeFabricHeightsModal();
+});
+
+fabricHeightsForm?.addEventListener("submit", (event) => {
+  event.preventDefault();
+  const items = (fabricHeightsInput?.value || "")
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean);
+
+  if (!items.length) {
+    showToast("Добавьте хотя бы одну рабочую высоту ткани", "error");
+    return;
   }
+
+  saveFabricHeights(items);
+  renderFabricHeights();
+  closeFabricHeightsModal();
+  showToast("Рабочие высоты Uni2 сохранены", "success");
+});
+
+resetFabricHeightsBtn?.addEventListener("click", async () => {
+  if (!(await showConfirm("Сбросить рабочие высоты тканей Uni2 до заводских параметров?", "Сбросить"))) return;
+  localStorage.removeItem(FABRIC_HEIGHTS_KEY);
+  renderFabricHeights();
+  showToast("Рабочие высоты Uni2 сброшены до заводских", "success");
 });
 
 instructionsList?.addEventListener("toggle", (event) => {
@@ -1131,6 +1229,7 @@ instructionsList?.addEventListener("click", async (event) => {
   showToast("Инструкция удалена", "success");
 });
 
+renderFabricHeights();
 renderCustomInstructions();
 filterInstructions();
 
