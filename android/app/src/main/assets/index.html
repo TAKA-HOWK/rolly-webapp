@@ -484,6 +484,7 @@ th, td {padding: 8px 6px;white-space: nowrap;}
 </div>
       <div class="btns">
       <button class="btn primary" id="saveJpeg" title="Сохранить заказ как изображение (JPEG)">Сохранить JPEG</button>
+      <button class="btn primary" id="saveAndSendJpeg" title="Сохранить заказ и открыть отправку JPEG">Сохранить и отправить</button>
       <button class="btn secondary" id="clearBtn" title="Очистить таблицу и форму">Очистить</button>
     </div>
   </div>
@@ -673,6 +674,16 @@ th, td {padding: 8px 6px;white-space: nowrap;}
             <span class="switch-slider"></span>
           </label>
         </div>
+      </section>
+      <section class="settings-item">
+        <div class="settings-row">
+          <h3 class="settings-title">Не сохранять JPEG на устройстве</h3>
+          <label class="switch" aria-label="Не сохранять JPEG на устройстве">
+            <input id="deviceSaveSwitch" type="checkbox">
+            <span class="switch-slider"></span>
+          </label>
+        </div>
+        <p class="settings-subtext">Когда включено, JPEG останется только в истории приложения или будет отправлен без записи в память телефона.</p>
       </section>
     </div>
     <div class="settings-reset">
@@ -1321,6 +1332,7 @@ const customerInput = document.getElementById("customer");
 const customerAutofill = document.getElementById("customerAutofill");
 const customerDefault = document.getElementById("customerDefault");
 const historySaveSwitch = document.getElementById("historySaveSwitch");
+const deviceSaveSwitch = document.getElementById("deviceSaveSwitch");
 const resetSettingsBtn = document.getElementById("resetSettingsBtn");
 
 const defaultSettings = {
@@ -1328,7 +1340,8 @@ const defaultSettings = {
   dateMode: "manual",
   customerAutofillEnabled: false,
   defaultCustomer: "",
-  disableHistorySaving: false
+  disableHistorySaving: false,
+  disableDeviceSaving: false
 };
 
 function getTodayISODate() {
@@ -1349,7 +1362,8 @@ function loadSettings() {
       dateMode: parsed?.dateMode === "auto" ? "auto" : "manual",
       customerAutofillEnabled: Boolean(parsed?.customerAutofillEnabled),
       defaultCustomer: typeof parsed?.defaultCustomer === "string" ? parsed.defaultCustomer : "",
-      disableHistorySaving: Boolean(parsed?.disableHistorySaving)
+      disableHistorySaving: Boolean(parsed?.disableHistorySaving),
+      disableDeviceSaving: Boolean(parsed?.disableDeviceSaving)
     };
   } catch {
     return { ...defaultSettings };
@@ -1392,6 +1406,10 @@ function applyHistorySavingSettings(settings) {
   if (historySaveSwitch) historySaveSwitch.checked = settings.disableHistorySaving;
 }
 
+function applyDeviceSavingSettings(settings) {
+  if (deviceSaveSwitch) deviceSaveSwitch.checked = settings.disableDeviceSaving;
+}
+
 const savedSettings = loadSettings();
 const storedTheme = localStorage.getItem(THEME_KEY);
 const initialTheme = savedSettings.theme || (storedTheme === "dark" ? "dark" : "light");
@@ -1399,6 +1417,7 @@ applyTheme(initialTheme);
 applyDateMode(savedSettings.dateMode);
 applyCustomerSettings(savedSettings);
 applyHistorySavingSettings(savedSettings);
+applyDeviceSavingSettings(savedSettings);
 
 themeSwitch?.addEventListener("change", () => {
   const nextTheme = themeSwitch.checked ? "dark" : "light";
@@ -1444,6 +1463,14 @@ historySaveSwitch?.addEventListener("change", () => {
   saveSettings(nextSettings);
 });
 
+deviceSaveSwitch?.addEventListener("change", () => {
+  const nextSettings = {
+    ...loadSettings(),
+    disableDeviceSaving: deviceSaveSwitch.checked
+  };
+  saveSettings(nextSettings);
+});
+
 resetSettingsBtn?.addEventListener("click", async () => {
   if (!await showConfirm("Сбросить все настройки приложения?", "Сбросить")) return;
   localStorage.removeItem(SETTINGS_KEY);
@@ -1453,6 +1480,7 @@ resetSettingsBtn?.addEventListener("click", async () => {
   if (customerInput) customerInput.value = "";
   applyCustomerSettings(defaultSettings);
   applyHistorySavingSettings(defaultSettings);
+  applyDeviceSavingSettings(defaultSettings);
   showToast("Настройки сброшены", "success");
 });
 
@@ -1783,11 +1811,10 @@ async function tryAndroidSaveImage(dataUrl, filename) {
   }
 }
 
-$("#saveJpeg").onclick = async () => {
-
+async function createOrderJpegArtifacts() {
   if (!rows.length) {
     showToast("Таблица пуста", "error");
-    return;
+    return [];
   }
 
   // A4 landscape: 842 x 595 при 96 DPI
@@ -1897,24 +1924,30 @@ $("#saveJpeg").onclick = async () => {
     const filename = `rolshtory_page_${page + 1}.jpg`;
     const dataUrl = canvas.toDataURL("image/jpeg", exportQuality);
 
-
     pageArtifacts.push({ filename, blob, dataUrl });
   }
 
-  const settings = loadSettings();
-  if (!settings.disableHistorySaving) {
-    const savedAt = new Date().toLocaleString("ru-RU");
-    const historyItems = getHistoryItems();
-    pageArtifacts.forEach((artifact) => {
-      historyItems.unshift({
-        filename: artifact.filename,
-        dataUrl: artifact.dataUrl,
-        savedAt
-      });
+  return pageArtifacts;
+}
+
+function saveOrderArtifactsToHistory(pageArtifacts, settings = loadSettings()) {
+  if (settings.disableHistorySaving || !pageArtifacts.length) return;
+
+  const savedAt = new Date().toLocaleString("ru-RU");
+  const historyItems = getHistoryItems();
+  pageArtifacts.forEach((artifact) => {
+    historyItems.unshift({
+      filename: artifact.filename,
+      dataUrl: artifact.dataUrl,
+      savedAt
     });
-    saveHistoryItems(historyItems);
-    renderHistory();
-  }
+  });
+  saveHistoryItems(historyItems);
+  renderHistory();
+}
+
+async function saveOrderArtifactsToDevice(pageArtifacts, settings = loadSettings()) {
+  if (settings.disableDeviceSaving) return true;
 
   let savedToAndroid = false;
   if (window.AndroidBridge && typeof window.AndroidBridge.saveImage === "function") {
@@ -1929,8 +1962,65 @@ $("#saveJpeg").onclick = async () => {
     pageArtifacts.forEach((p) => tryAutoDownloadBlob(p.blob, p.filename));
   }
 
-  showToast(`Заказ сохранён в JPEG (${pageArtifacts.length} стр.)`, "success");
-};
+  return savedToAndroid;
+}
+
+async function shareOrderArtifacts(pageArtifacts) {
+  if (!pageArtifacts.length) return false;
+
+  if (window.AndroidBridge && typeof window.AndroidBridge.shareImages === "function") {
+    try {
+      const shared = window.AndroidBridge.shareImages(
+        JSON.stringify(pageArtifacts.map((p) => p.dataUrl)),
+        JSON.stringify(pageArtifacts.map((p) => p.filename))
+      );
+      if (shared) return true;
+    } catch (err) {
+      console.warn("Android multiple share failed", err);
+    }
+  }
+
+  if (pageArtifacts.length === 1 && await tryAndroidShareImage(pageArtifacts[0].dataUrl, pageArtifacts[0].filename)) {
+    return true;
+  }
+
+  const files = pageArtifacts.map((artifact) => new File([artifact.blob], artifact.filename, { type: artifact.blob.type || "image/jpeg" }));
+  if (navigator.share && (!navigator.canShare || navigator.canShare({ files }))) {
+    try {
+      await navigator.share({
+        files,
+        title: "Заказ Rolly",
+        text: "Заказ Rolly"
+      });
+      return true;
+    } catch (err) {
+      if (err?.name === "AbortError") return true;
+      console.warn("Web Share failed", err);
+    }
+  }
+
+  showToast("Отправка файлов не поддерживается на этом устройстве", "error", 4200);
+  return false;
+}
+
+async function handleOrderJpegExport({ send = false } = {}) {
+  const pageArtifacts = await createOrderJpegArtifacts();
+  if (!pageArtifacts.length) return;
+
+  const settings = loadSettings();
+  saveOrderArtifactsToHistory(pageArtifacts, settings);
+  await saveOrderArtifactsToDevice(pageArtifacts, settings);
+
+  let shared = false;
+  if (send) shared = await shareOrderArtifacts(pageArtifacts);
+
+  const deviceSuffix = settings.disableDeviceSaving ? " без сохранения на устройстве" : "";
+  const sendSuffix = send && shared ? " и отправлен" : "";
+  showToast(`Заказ сохранён${sendSuffix} в JPEG (${pageArtifacts.length} стр.)${deviceSuffix}`, "success");
+}
+
+$("#saveJpeg").onclick = () => handleOrderJpegExport();
+$("#saveAndSendJpeg").onclick = () => handleOrderJpegExport({ send: true });
 
 
 
