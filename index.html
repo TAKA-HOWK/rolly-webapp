@@ -146,6 +146,12 @@
   .switch input:checked + .switch-slider::before{transform:translateX(18px)}
   .settings-input-wrap{margin-top:10px}
   .settings-input-wrap input:disabled{opacity:.55;cursor:not-allowed}
+  .instruction-edit{border:1px solid var(--border);background:var(--control-bg);color:var(--accent);border-radius:10px;padding:8px 10px;font-size:13px;font-weight:700;cursor:pointer;flex-shrink:0}
+  .fabric-editor-panel{display:grid;gap:10px;border:1px solid var(--border);border-radius:14px;padding:12px;background:linear-gradient(180deg,var(--btn-secondary-bg),var(--card))}
+  .fabric-editor-panel[hidden]{display:none}
+  .fabric-editor-panel p{margin:0;color:var(--muted);font-size:13px;line-height:1.45}
+  .fabric-editor-panel textarea{min-height:180px;resize:vertical;box-sizing:border-box}
+  .fabric-editor-actions{display:flex;flex-wrap:wrap;gap:8px}
   .settings-reset{margin-top:14px}
   .history-lightbox{position:fixed;inset:0;background:rgba(0,0,0,.88);display:none;align-items:center;justify-content:center;padding:14px;z-index:1700;cursor:zoom-out}
   .history-lightbox.show{display:flex}
@@ -490,6 +496,7 @@ th, td {padding: 8px 6px;white-space: nowrap;}
         </div>
       </div>
 
+
       <div class="instructions-list" id="instructionsList">
         <details class="instruction-card" data-category="measurement" data-search="кассета замер направляющие ширина высота короб">
           <summary>
@@ -535,11 +542,14 @@ th, td {padding: 8px 6px;white-space: nowrap;}
           </div>
         </details>
 
-        <details class="instruction-card" data-category="fabric" data-search="uni ткани рабочие высоты высота рулон ограничение">
+        <details class="instruction-card" id="fabricHeightsCard" data-category="fabric" data-search="uni ткани рабочие высоты высота рулон ограничение">
           <summary>
-            <div>
-              <h3>Рабочие высоты тканей для Uni2</h3>
-              <p>Напоминание, когда нужно быстро проверить, подходит ли ткань под высоту изделия.</p>
+            <div class="instruction-card-title">
+              <div>
+                <h3>Рабочие высоты тканей для Uni2</h3>
+                <p>Напоминание, когда нужно быстро проверить, подходит ли ткань под высоту изделия.</p>
+              </div>
+              <button class="instruction-edit" type="button" id="editFabricHeightsBtn">Изменить вкладку</button>
             </div>
           </summary>
           <div class="instruction-card-body">
@@ -547,7 +557,15 @@ th, td {padding: 8px 6px;white-space: nowrap;}
               <span class="instruction-badge">Uni2</span>
               <span class="instruction-badge">mini</span>
             </div>
-            <ol class="instruction-steps">
+            <section class="fabric-editor-panel" id="fabricHeightsEditorPanel" aria-label="Редактирование рабочих высот тканей" hidden>
+              <p>Отредактируйте список рабочих высот. Каждая строка будет отдельным пунктом в этой вкладке.</p>
+              <textarea id="fabricHeightsEditor" rows="10" aria-label="Список рабочих высот тканей"></textarea>
+              <div class="fabric-editor-actions">
+                <button class="btn primary" type="button" id="saveFabricHeightsBtn">Сохранить ткани</button>
+                <button class="btn secondary" type="button" id="cancelFabricHeightsEditBtn">Отмена</button>
+              </div>
+            </section>
+            <ol class="instruction-steps" id="fabricHeightsList">
 <li>601-... - 2.25м</li>
 <li>602-... - 2.25м</li>
 <li>603-... - 2.25м</li>
@@ -686,6 +704,15 @@ th, td {padding: 8px 6px;white-space: nowrap;}
             <input id="historySaveSwitch" type="checkbox">
             <span class="switch-slider"></span>
           </label>
+        </div>
+      </section>
+      <section class="settings-item">
+        <div class="settings-row">
+          <div>
+            <h3 class="settings-title">Сброс вкладки «Ткани»</h3>
+            <p class="settings-subtext">Вернуть заводской список рабочих высот тканей в справке.</p>
+          </div>
+          <button class="btn secondary" type="button" id="resetFabricHeightsBtn">Сбросить до заводских</button>
         </div>
       </section>
     </div>
@@ -833,6 +860,18 @@ const historyFullscreenImage = document.getElementById("historyFullscreenImage")
 const historyDownloadBtn = document.getElementById("historyDownloadBtn");
 const HISTORY_KEY = "rolly-order-history";
 const CUSTOM_INSTRUCTIONS_KEY = "rolly-custom-instructions";
+const FABRIC_HEIGHTS_KEY = "rolly-fabric-heights";
+const fabricHeightsCard = document.getElementById("fabricHeightsCard");
+const fabricHeightsList = document.getElementById("fabricHeightsList");
+const fabricHeightsEditorPanel = document.getElementById("fabricHeightsEditorPanel");
+const fabricHeightsEditor = document.getElementById("fabricHeightsEditor");
+const editFabricHeightsBtn = document.getElementById("editFabricHeightsBtn");
+const saveFabricHeightsBtn = document.getElementById("saveFabricHeightsBtn");
+const cancelFabricHeightsEditBtn = document.getElementById("cancelFabricHeightsEditBtn");
+const resetFabricHeightsBtn = document.getElementById("resetFabricHeightsBtn");
+const defaultFabricHeights = fabricHeightsList
+  ? $$("#fabricHeightsList li").map((item) => item.textContent.trim()).filter(Boolean)
+  : [];
 
 function getHistoryItems() {
   try {
@@ -912,6 +951,45 @@ function renderHistory() {
 
     historyGrid.appendChild(card);
   });
+}
+
+function getSavedFabricHeights() {
+  try {
+    const parsed = JSON.parse(localStorage.getItem(FABRIC_HEIGHTS_KEY) || "[]");
+    return Array.isArray(parsed)
+      ? parsed.map((item) => String(item).trim()).filter(Boolean)
+      : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveFabricHeights(items) {
+  localStorage.setItem(FABRIC_HEIGHTS_KEY, JSON.stringify(items));
+}
+
+function getActiveFabricHeights() {
+  const savedItems = getSavedFabricHeights();
+  return savedItems.length ? savedItems : defaultFabricHeights;
+}
+
+function renderFabricHeights(items = getActiveFabricHeights()) {
+  if (!fabricHeightsList) return;
+  fabricHeightsList.innerHTML = items.map((item) => `<li>${escapeHtml(item)}</li>`).join("");
+  if (fabricHeightsEditor) fabricHeightsEditor.value = items.join("\n");
+}
+
+function openFabricHeightsEditor() {
+  if (!fabricHeightsEditorPanel) return;
+  if (fabricHeightsCard) fabricHeightsCard.open = true;
+  renderFabricHeights();
+  fabricHeightsEditorPanel.hidden = false;
+  setTimeout(() => fabricHeightsEditor?.focus(), 0);
+}
+
+function closeFabricHeightsEditor() {
+  if (fabricHeightsEditorPanel) fabricHeightsEditorPanel.hidden = true;
+  if (fabricHeightsEditor) fabricHeightsEditor.value = getActiveFabricHeights().join("\n");
 }
 
 function getInstructionCards() {
@@ -1071,6 +1149,7 @@ instructionsList?.addEventListener("toggle", (event) => {
   const card = event.target;
   if (!(card instanceof HTMLDetailsElement) || !card.classList.contains("instruction-card")) return;
   if (!card.open) {
+    if (card === fabricHeightsCard) closeFabricHeightsEditor();
     filterInstructions();
     return;
   }
@@ -1132,7 +1211,43 @@ instructionsList?.addEventListener("click", async (event) => {
 });
 
 renderCustomInstructions();
+renderFabricHeights();
 filterInstructions();
+
+editFabricHeightsBtn?.addEventListener("click", (event) => {
+  event.preventDefault();
+  event.stopPropagation();
+  openFabricHeightsEditor();
+});
+
+cancelFabricHeightsEditBtn?.addEventListener("click", closeFabricHeightsEditor);
+
+saveFabricHeightsBtn?.addEventListener("click", () => {
+  const items = (fabricHeightsEditor?.value || "")
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean);
+
+  if (!items.length) {
+    showToast("Добавьте хотя бы одну строку для вкладки «Ткани»", "error");
+    return;
+  }
+
+  saveFabricHeights(items);
+  renderFabricHeights(items);
+  closeFabricHeightsEditor();
+  filterInstructions();
+  showToast("Вкладка «Ткани» обновлена", "success");
+});
+
+resetFabricHeightsBtn?.addEventListener("click", async () => {
+  if (!(await showConfirm("Сбросить вкладку «Ткани» до заводских параметров?", "Сбросить"))) return;
+  localStorage.removeItem(FABRIC_HEIGHTS_KEY);
+  renderFabricHeights(defaultFabricHeights);
+  closeFabricHeightsEditor();
+  filterInstructions();
+  showToast("Вкладка «Ткани» сброшена до заводских параметров", "success");
+});
 
 historyLightbox?.addEventListener("click", (event) => {
   if (event.target === historyLightbox || event.target === historyFullscreenImage) {
@@ -1296,12 +1411,15 @@ historySaveSwitch?.addEventListener("change", () => {
 resetSettingsBtn?.addEventListener("click", async () => {
   if (!await showConfirm("Сбросить все настройки приложения?", "Сбросить")) return;
   localStorage.removeItem(SETTINGS_KEY);
+  localStorage.removeItem(FABRIC_HEIGHTS_KEY);
   localStorage.setItem(THEME_KEY, defaultSettings.theme);
   applyTheme(defaultSettings.theme);
   applyDateMode(defaultSettings.dateMode);
   if (customerInput) customerInput.value = "";
   applyCustomerSettings(defaultSettings);
   applyHistorySavingSettings(defaultSettings);
+  renderFabricHeights(defaultFabricHeights);
+  closeFabricHeightsEditor();
   showToast("Настройки сброшены", "success");
 });
 
