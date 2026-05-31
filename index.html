@@ -132,8 +132,8 @@
   .history-preview{display:block;width:100%;padding:0;border:none;background:transparent;cursor:pointer;text-align:left}
   .history-card img{display:block;width:100%;aspect-ratio:4/3;object-fit:cover;background:#fff}
   .history-meta{padding:8px 10px;font-size:12px;color:var(--muted)}
-  .history-actions{display:flex;justify-content:flex-end;padding:0 10px 10px}
-  .history-download{font-size:12px;padding:7px 10px;border-radius:8px}
+  .history-actions{display:flex;justify-content:flex-end;gap:8px;flex-wrap:wrap;padding:0 10px 10px}
+  .history-download,.history-send{font-size:12px;padding:7px 10px;border-radius:8px}
   .history-empty{margin:0;color:var(--muted);font-size:14px}
   .settings-list{display:grid;gap:2px;border:1px solid var(--border);border-radius:16px;background:var(--control-bg);overflow:hidden}
   .settings-item{padding:14px 12px;border-bottom:1px solid var(--border);background:var(--control-bg)}
@@ -153,7 +153,7 @@
   .history-lightbox{position:fixed;inset:0;background:rgba(0,0,0,.88);display:none;align-items:center;justify-content:center;padding:14px;z-index:1700;cursor:zoom-out}
   .history-lightbox.show{display:flex}
   .history-lightbox img{max-width:100%;max-height:100%;object-fit:contain;border-radius:8px}
-  .history-lightbox-download{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);z-index:1}
+  .history-lightbox-actions{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);z-index:1;display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
   .toast-viewport{
     position:fixed;
     right:14px;
@@ -684,7 +684,10 @@ th, td {padding: 8px 6px;white-space: nowrap;}
 
 <div id="historyLightbox" class="history-lightbox" aria-label="Просмотр изображения">
   <img id="historyFullscreenImage" src="" alt="Заказ в полном размере">
-  <button type="button" id="historyDownloadBtn" class="btn primary history-lightbox-download">Скачать JPEG</button>
+  <div class="history-lightbox-actions">
+    <button type="button" id="historySendBtn" class="btn secondary">Отправить</button>
+    <button type="button" id="historyDownloadBtn" class="btn primary">Скачать JPEG</button>
+  </div>
 </div>
 
 <nav class="bottom-dock" aria-label="Быстрая навигация">
@@ -817,6 +820,7 @@ const historyEmpty = document.getElementById("historyEmpty");
 const historyLightbox = document.getElementById("historyLightbox");
 const historyFullscreenImage = document.getElementById("historyFullscreenImage");
 const historyDownloadBtn = document.getElementById("historyDownloadBtn");
+const historySendBtn = document.getElementById("historySendBtn");
 const HISTORY_KEY = "rolly-order-history";
 const CUSTOM_INSTRUCTIONS_KEY = "rolly-custom-instructions";
 const FABRIC_HEIGHTS_KEY = "rolly-fabric-heights-uni2";
@@ -884,6 +888,39 @@ function getHistoryFilename(item, index = 1) {
   return item?.filename || `rolshtory_history_${index}.jpg`;
 }
 
+async function shareHistoryItemJpeg(item, index = 1) {
+  if (!item?.dataUrl) return;
+  const filename = getHistoryFilename(item, index);
+
+  if (window.AndroidBridge && typeof window.AndroidBridge.shareImage === "function") {
+    const sharedToAndroid = await tryAndroidShareImage(item.dataUrl, filename);
+    if (sharedToAndroid) return;
+  }
+
+  const blob = dataURLToBlob(item.dataUrl);
+  if (!blob) {
+    showToast("Не удалось подготовить JPEG для отправки", "error", 4200);
+    return;
+  }
+
+  const file = new File([blob], filename, { type: blob.type || "image/jpeg" });
+  if (navigator.share && (!navigator.canShare || navigator.canShare({ files: [file] }))) {
+    try {
+      await navigator.share({
+        files: [file],
+        title: filename,
+        text: "Заказ Rolly"
+      });
+      return;
+    } catch (err) {
+      if (err?.name === "AbortError") return;
+      console.warn("Web Share failed", err);
+    }
+  }
+
+  showToast("Отправка файлов не поддерживается на этом устройстве", "error", 4200);
+}
+
 async function saveHistoryItemJpeg(item, index = 1) {
   if (!item?.dataUrl) return;
   const filename = getHistoryFilename(item, index);
@@ -913,6 +950,7 @@ function toggleHistoryLightbox(dataUrl, filename) {
   }
   if (historyFullscreenImage) historyFullscreenImage.src = dataUrl;
   if (historyDownloadBtn) historyDownloadBtn.dataset.filename = filename || "";
+  if (historySendBtn) historySendBtn.dataset.filename = filename || "";
   historyLightbox?.classList.add("show");
 }
 
@@ -931,12 +969,17 @@ function renderHistory() {
         <div class="history-meta">${item.savedAt}</div>
       </button>
       <div class="history-actions">
+        <button type="button" class="btn secondary history-send">Отправить</button>
         <button type="button" class="btn secondary history-download">Скачать JPEG</button>
       </div>
     `;
 
     card.querySelector(".history-preview")?.addEventListener("click", () =>
       toggleHistoryLightbox(item.dataUrl, getHistoryFilename(item, index + 1))
+    );
+
+    card.querySelector(".history-send")?.addEventListener("click", () =>
+      shareHistoryItemJpeg(item, index + 1)
     );
 
     card.querySelector(".history-download")?.addEventListener("click", () =>
@@ -1237,6 +1280,15 @@ historyLightbox?.addEventListener("click", (event) => {
   if (event.target === historyLightbox || event.target === historyFullscreenImage) {
     historyLightbox.classList.remove("show");
   }
+});
+
+historySendBtn?.addEventListener("click", async (event) => {
+  event.stopPropagation();
+  if (!historyFullscreenImage?.src) return;
+  await shareHistoryItemJpeg({
+    dataUrl: historyFullscreenImage.src,
+    filename: historySendBtn.dataset.filename || "rolshtory_history.jpg"
+  });
 });
 
 historyDownloadBtn?.addEventListener("click", async (event) => {
@@ -1709,6 +1761,16 @@ function tryAutoDownloadBlob(blob, filename) {
   link.click();
   link.remove();
   setTimeout(() => URL.revokeObjectURL(url), 8000);
+}
+
+async function tryAndroidShareImage(dataUrl, filename) {
+  if (!window.AndroidBridge || typeof window.AndroidBridge.shareImage !== "function") return false;
+  try {
+    return !!window.AndroidBridge.shareImage(dataUrl, filename);
+  } catch (err) {
+    console.warn("Android share failed", err);
+    return false;
+  }
 }
 
 async function tryAndroidSaveImage(dataUrl, filename) {
