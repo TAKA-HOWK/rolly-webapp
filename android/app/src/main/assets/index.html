@@ -547,11 +547,14 @@ th, td {padding: 8px 6px;white-space: nowrap;}
           </div>
         </details>
 
-        <details class="instruction-card" data-category="fabric" data-search="uni ткани рабочие высоты высота рулон ограничение">
+        <details class="instruction-card" id="fabricHeightsCard" data-category="fabric" data-search="uni ткани рабочие высоты высота рулон ограничение">
           <summary>
-            <div>
-              <h3>Рабочие высоты тканей для Uni2</h3>
-              <p>Напоминание, когда нужно быстро проверить, подходит ли ткань под высоту изделия.</p>
+            <div class="instruction-card-title">
+              <div>
+                <h3>Рабочие высоты тканей для Uni2</h3>
+                <p>Напоминание, когда нужно быстро проверить, подходит ли ткань под высоту изделия.</p>
+              </div>
+              <button class="instruction-edit" type="button" id="editFabricHeightsBtn">Изменить вкладку</button>
             </div>
           </summary>
           <div class="instruction-card-body">
@@ -1132,6 +1135,7 @@ instructionsList?.addEventListener("toggle", (event) => {
   const card = event.target;
   if (!(card instanceof HTMLDetailsElement) || !card.classList.contains("instruction-card")) return;
   if (!card.open) {
+    if (card === fabricHeightsCard) closeFabricHeightsEditor();
     filterInstructions();
     return;
   }
