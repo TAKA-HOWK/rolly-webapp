@@ -1551,6 +1551,15 @@ function isControlSideRequired(systemValue) {
   return !systemsWithOptionalControlSide.has(systemValue);
 }
 
+function getAvailableBasisPill() {
+  return document.querySelector('#basis .pillr:not(.disabled)');
+}
+
+function selectAvailableBasis() {
+  $$("#basis .pillr").forEach(el => el.classList.remove("active"));
+  getAvailableBasisPill()?.classList.add("active");
+}
+
 function syncBasisAvailabilityForSystem(systemValue) {
   const vgshPill = document.querySelector('#basis .pillr[data-val="ВГШ"]');
   if (!vgshPill) return;
@@ -1560,9 +1569,7 @@ function syncBasisAvailabilityForSystem(systemValue) {
   vgshPill.setAttribute('aria-disabled', shouldDisableVgsh ? 'true' : 'false');
 
   if (shouldDisableVgsh && vgshPill.classList.contains('active')) {
-    vgshPill.classList.remove('active');
-    const fallbackBasis = document.querySelector('#basis .pillr:not(.disabled)');
-    fallbackBasis?.classList.add('active');
+    selectAvailableBasis();
   }
 }
 
@@ -1570,12 +1577,12 @@ function syncBasisAvailabilityForSystem(systemValue) {
     // по чём размеры
 $("#basis").onclick=e=>{
   const p=e.target.closest(".pillr");
-  if(!p)return;
-  $$(".pillr").forEach(x=>x.classList.remove("active"));
+  if(!p || p.classList.contains("disabled"))return;
+  $$("#basis .pillr").forEach(x=>x.classList.remove("active"));
   p.classList.add("active");
 };
 function getBasis() {
-  const active = $("#basis .active");
+  const active = $("#basis .pillr.active:not(.disabled)");
   return active ? active.dataset.val : null;
 }
 
@@ -1741,7 +1748,11 @@ $("#clearBtn").onclick = async () => {
     // Сброс и выбор плашек
     $$("#basis .pillr").forEach(el => el.classList.remove("active"));
     const basisEl = $(`#basis .pillr[data-val="${item.basis}"]`);
-    if (basisEl) basisEl.classList.add("active");
+    if (basisEl && !basisEl.classList.contains("disabled")) {
+      basisEl.classList.add("active");
+    } else {
+      selectAvailableBasis();
+    }
 
     $$("#sideGroup .pill").forEach(el => el.classList.remove("active"));
     const sideEl = $(`#sideGroup .pill[data-val="${item.side}"]`);
@@ -1762,9 +1773,7 @@ $("#clearBtn").onclick = async () => {
   $("#qty").value = "";
   //$("#customer").value = "";
 
-  $$("#basis .pillr").forEach(el => el.classList.remove("active"));
-  const defaultBasis = $$("#basis .pillr")[0];
-  if (defaultBasis) defaultBasis.classList.add("active");
+  selectAvailableBasis();
 
   $$("#sideGroup .pill").forEach(el => el.classList.remove("active"));
   const defaultSide = Array.from($$("#sideGroup .pill")).find(el => el.dataset.val === "");
