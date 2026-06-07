@@ -137,7 +137,8 @@
   .history-card img{display:block;width:100%;aspect-ratio:4/3;object-fit:cover;background:#fff}
   .history-meta{padding:8px 10px;font-size:12px;color:var(--muted)}
   .history-actions{display:flex;justify-content:flex-end;gap:8px;flex-wrap:wrap;padding:0 10px 10px}
-  .history-download,.history-send{font-size:12px;padding:7px 10px;border-radius:8px}
+  .history-download,.history-send,.history-delete{font-size:12px;padding:7px 10px;border-radius:8px}
+  .history-delete{color:var(--danger)}
   .history-empty{margin:0;color:var(--muted);font-size:14px}
   .settings-list{display:grid;gap:2px;border:1px solid var(--border);border-radius:16px;background:var(--control-bg);overflow:hidden}
   .settings-item{padding:14px 12px;border-bottom:1px solid var(--border);background:var(--control-bg)}
@@ -682,6 +683,7 @@ th, td {padding: 8px 6px;white-space: nowrap;}
   <div class="history-lightbox-actions">
     <button type="button" id="historySendBtn" class="btn secondary">Отправить</button>
     <button type="button" id="historyDownloadBtn" class="btn primary">Скачать</button>
+    <button type="button" id="historyDeleteBtn" class="btn secondary history-delete">Удалить</button>
   </div>
 </div>
 
@@ -816,6 +818,7 @@ const historyLightbox = document.getElementById("historyLightbox");
 const historyFullscreenImage = document.getElementById("historyFullscreenImage");
 const historyDownloadBtn = document.getElementById("historyDownloadBtn");
 const historySendBtn = document.getElementById("historySendBtn");
+const historyDeleteBtn = document.getElementById("historyDeleteBtn");
 const HISTORY_KEY = "rolly-order-history";
 const CUSTOM_INSTRUCTIONS_KEY = "rolly-custom-instructions";
 const FABRIC_HEIGHTS_KEY = "rolly-fabric-heights-uni2";
@@ -916,6 +919,18 @@ async function shareHistoryItemJpeg(item, index = 1) {
   showToast("Отправка файлов не поддерживается на этом устройстве", "error", 4200);
 }
 
+async function deleteHistoryItem(index) {
+  const items = getHistoryItems();
+  if (index < 0 || index >= items.length) return;
+  if (!(await showConfirm("Удалить этот файл из истории?", "Удалить"))) return;
+
+  items.splice(index, 1);
+  saveHistoryItems(items);
+  renderHistory();
+  historyLightbox?.classList.remove("show");
+  showToast("Файл удалён из истории", "success");
+}
+
 async function saveHistoryItemJpeg(item, index = 1) {
   if (!item?.dataUrl) return;
   const filename = getHistoryFilename(item, index);
@@ -937,7 +952,7 @@ async function saveHistoryItemJpeg(item, index = 1) {
   showToast(`JPEG сохранён: ${filename}`, "success");
 }
 
-function toggleHistoryLightbox(dataUrl, filename) {
+function toggleHistoryLightbox(dataUrl, filename, index = -1) {
   const isVisible = historyLightbox?.classList.contains("show");
   if (isVisible && historyFullscreenImage?.src === dataUrl) {
     historyLightbox?.classList.remove("show");
@@ -946,6 +961,7 @@ function toggleHistoryLightbox(dataUrl, filename) {
   if (historyFullscreenImage) historyFullscreenImage.src = dataUrl;
   if (historyDownloadBtn) historyDownloadBtn.dataset.filename = filename || "";
   if (historySendBtn) historySendBtn.dataset.filename = filename || "";
+  if (historyDeleteBtn) historyDeleteBtn.dataset.index = String(index);
   historyLightbox?.classList.add("show");
 }
 
@@ -966,11 +982,12 @@ function renderHistory() {
       <div class="history-actions">
         <button type="button" class="btn secondary history-send">Отправить</button>
         <button type="button" class="btn secondary history-download">Скачать</button>
+        <button type="button" class="btn secondary history-delete">Удалить</button>
       </div>
     `;
 
     card.querySelector(".history-preview")?.addEventListener("click", () =>
-      toggleHistoryLightbox(item.dataUrl, getHistoryFilename(item, index + 1))
+      toggleHistoryLightbox(item.dataUrl, getHistoryFilename(item, index + 1), index)
     );
 
     card.querySelector(".history-send")?.addEventListener("click", () =>
@@ -979,6 +996,10 @@ function renderHistory() {
 
     card.querySelector(".history-download")?.addEventListener("click", () =>
       saveHistoryItemJpeg(item, index + 1)
+    );
+
+    card.querySelector(".history-delete")?.addEventListener("click", () =>
+      deleteHistoryItem(index)
     );
 
     historyGrid.appendChild(card);
@@ -1293,6 +1314,13 @@ historyDownloadBtn?.addEventListener("click", async (event) => {
     dataUrl: historyFullscreenImage.src,
     filename: historyDownloadBtn.dataset.filename || "rolshtory_history.jpg"
   });
+});
+
+historyDeleteBtn?.addEventListener("click", async (event) => {
+  event.stopPropagation();
+  const index = Number(historyDeleteBtn.dataset.index);
+  if (!Number.isInteger(index)) return;
+  await deleteHistoryItem(index);
 });
 
 document.getElementById("clearHistoryBtn")?.addEventListener("click", async () => {
