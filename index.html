@@ -487,7 +487,7 @@ th, td {padding: 8px 6px;white-space: nowrap;}
   <textarea id="notes" rows="3" style="width:100%;padding:10px;border-radius:10px;border:1px solid var(--border);background:var(--control-bg);color:var(--text);"></textarea>
 </div>
       <div class="btns">
-      <button class="btn primary" id="saveJpeg" title="Сохранить заказ как изображение (JPEG)">Сохранить JPEG</button>
+      <button class="btn primary" id="saveJpeg" title="Сохранить заказ как изображение (JPEG)">Сохранить</button>
       <button class="btn primary" id="saveAndSendJpeg" title="Сохранить заказ и открыть отправку JPEG">Сохранить и отправить</button>
       <button class="btn secondary" id="clearBtn" title="Очистить таблицу и форму">Очистить</button>
     </div>
@@ -581,27 +581,7 @@ th, td {padding: 8px 6px;white-space: nowrap;}
           </div>
         </details>
 
-        <details class="instruction-card" data-category="electric" data-search="электрика мотор настройка концевики пульт питание">
-          <summary>
-            <div>
-              <h3>Как настраивать электрику</h3>
-              <p>Базовая последовательность для первого запуска и проверки работы привода.</p>
-            </div>
-          </summary>
-          <div class="instruction-card-body">
-            <div class="instruction-meta">
-              <span class="instruction-badge">Электрика</span>
-              <span class="instruction-badge">Пуск и проверка</span>
-            </div>
-            <ul class="instruction-checklist">
-              <li>Проверьте питание, полярность и доступность точки подключения до монтажа.</li>
-              <li>Сначала свяжите мотор с пультом или кнопкой управления, затем выставляйте крайние положения.</li>
-              <li>После настройки обязательно сделайте полный цикл вверх/вниз и убедитесь, что ткань идёт ровно.</li>
-              <li>Если направление движения перепутано, измените его до финальной фиксации концевиков.</li>
-            </ul>
-            <p class="instruction-note">Важно: любые финальные значения крайних положений лучше записывать сразу после настройки.</p>
-          </div>
-        </details>
+
 
         <details class="instruction-card" data-category="mounting" data-search="стеновая потолочная переделать открытую систему крепление кронштейн">
           <summary>
@@ -634,7 +614,7 @@ th, td {padding: 8px 6px;white-space: nowrap;}
       <h2 style="margin:0;font-size:18px;">История</h2>
       <button class="btn secondary" type="button" id="clearHistoryBtn">Очистить историю</button>
     </div>
-    <p id="historyEmpty" class="history-empty">История пустая. Сохраните заказ в JPEG, чтобы он появился здесь.</p>
+    <p id="historyEmpty" class="history-empty">История пустая. Сохраните заказ, чтобы он появился здесь.</p>
     <div id="historyGrid" class="history-grid"></div>
   </div>
   <div id="settingsView" class="tab-view" aria-label="Вкладка настроек">
@@ -681,13 +661,13 @@ th, td {padding: 8px 6px;white-space: nowrap;}
       </section>
       <section class="settings-item">
         <div class="settings-row">
-          <h3 class="settings-title">Не сохранять JPEG на устройстве</h3>
-          <label class="switch" aria-label="Не сохранять JPEG на устройстве">
+          <h3 class="settings-title">Не сохранять на устройстве</h3>
+          <label class="switch" aria-label="Не сохранять на устройстве">
             <input id="deviceSaveSwitch" type="checkbox">
             <span class="switch-slider"></span>
           </label>
         </div>
-        <p class="settings-subtext">Когда включено, JPEG останется только в истории приложения или будет отправлен без записи в память телефона.</p>
+        <p class="settings-subtext">Когда включено, заказ останется только в истории приложения или будет отправлен без записи в память телефона.</p>
       </section>
     </div>
     <div class="settings-reset">
@@ -701,7 +681,7 @@ th, td {padding: 8px 6px;white-space: nowrap;}
   <img id="historyFullscreenImage" src="" alt="Заказ в полном размере">
   <div class="history-lightbox-actions">
     <button type="button" id="historySendBtn" class="btn secondary">Отправить</button>
-    <button type="button" id="historyDownloadBtn" class="btn primary">Скачать JPEG</button>
+    <button type="button" id="historyDownloadBtn" class="btn primary">Скачать</button>
   </div>
 </div>
 
@@ -914,7 +894,7 @@ async function shareHistoryItemJpeg(item, index = 1) {
 
   const blob = dataURLToBlob(item.dataUrl);
   if (!blob) {
-    showToast("Не удалось подготовить JPEG для отправки", "error", 4200);
+    showToast("Не удалось подготовить заказ для отправки", "error", 4200);
     return;
   }
 
@@ -948,7 +928,7 @@ async function saveHistoryItemJpeg(item, index = 1) {
   if (!savedToAndroid) {
     const blob = dataURLToBlob(item.dataUrl);
     if (!blob) {
-      showToast("Не удалось подготовить JPEG для сохранения", "error", 4200);
+      showToast("Не удалось подготовить заказ для сохранения", "error", 4200);
       return;
     }
     tryAutoDownloadBlob(blob, filename);
@@ -985,7 +965,7 @@ function renderHistory() {
       </button>
       <div class="history-actions">
         <button type="button" class="btn secondary history-send">Отправить</button>
-        <button type="button" class="btn secondary history-download">Скачать JPEG</button>
+        <button type="button" class="btn secondary history-download">Скачать</button>
       </div>
     `;
 
@@ -1318,7 +1298,7 @@ historyDownloadBtn?.addEventListener("click", async (event) => {
 document.getElementById("clearHistoryBtn")?.addEventListener("click", async () => {
   const items = getHistoryItems();
   if (!items.length) return;
-  if (await showConfirm("Очистить историю JPEG заказов?", "Очистить")) {
+  if (await showConfirm("Очистить историю заказов?", "Очистить")) {
     saveHistoryItems([]);
     renderHistory();
     showToast("История очищена", "success");
@@ -1418,7 +1398,7 @@ function updateSaveJpegAvailability(settings = loadSettings()) {
   saveJpegBtn.disabled = shouldDisableSaveJpeg;
   saveJpegBtn.setAttribute("aria-disabled", shouldDisableSaveJpeg ? "true" : "false");
   saveJpegBtn.title = shouldDisableSaveJpeg
-    ? "Сохранение JPEG недоступно: история и сохранение на устройстве отключены"
+    ? "Сохранение заказа недоступно: история и сохранение на устройстве отключены"
     : "Сохранить заказ как изображение (JPEG)";
 }
 
@@ -1792,7 +1772,7 @@ function blobFromCanvas(canvas, quality) {
   return new Promise((resolve, reject) => {
     canvas.toBlob((blob) => {
       if (blob) resolve(blob);
-      else reject(new Error("Не удалось сформировать JPEG"));
+      else reject(new Error("Не удалось сформировать заказ"));
     }, "image/jpeg", quality);
   });
 }
