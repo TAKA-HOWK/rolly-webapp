@@ -72,6 +72,7 @@
   .pillr.disabled{opacity:.5;cursor:not-allowed;pointer-events:none}
   .btn{padding:10px 14px;border-radius:10px;border:none;cursor:pointer;font-weight:600}
   .btn.primary{background:linear-gradient(180deg,var(--accent),#2a7ee8);color:#fff}
+  .btn:disabled{opacity:.5;cursor:not-allowed;filter:grayscale(.35)}
   .btn.secondary{background:var(--btn-secondary-bg);color:var(--btn-secondary-text);border:1px solid var(--border)}
   .btns{display:flex;flex-wrap:wrap;gap:10px;margin-top:12px}
   .table-wrap{overflow-x:auto;-webkit-overflow-scrolling: touch;margin-top:14px}
@@ -1336,6 +1337,7 @@ const customerAutofill = document.getElementById("customerAutofill");
 const customerDefault = document.getElementById("customerDefault");
 const historySaveSwitch = document.getElementById("historySaveSwitch");
 const deviceSaveSwitch = document.getElementById("deviceSaveSwitch");
+const saveJpegBtn = document.getElementById("saveJpeg");
 const resetSettingsBtn = document.getElementById("resetSettingsBtn");
 
 const defaultSettings = {
@@ -1409,6 +1411,17 @@ function applyHistorySavingSettings(settings) {
   if (historySaveSwitch) historySaveSwitch.checked = settings.disableHistorySaving;
 }
 
+function updateSaveJpegAvailability(settings = loadSettings()) {
+  const shouldDisableSaveJpeg = Boolean(settings.disableHistorySaving && settings.disableDeviceSaving);
+  if (!saveJpegBtn) return;
+
+  saveJpegBtn.disabled = shouldDisableSaveJpeg;
+  saveJpegBtn.setAttribute("aria-disabled", shouldDisableSaveJpeg ? "true" : "false");
+  saveJpegBtn.title = shouldDisableSaveJpeg
+    ? "Сохранение JPEG недоступно: история и сохранение на устройстве отключены"
+    : "Сохранить заказ как изображение (JPEG)";
+}
+
 function applyDeviceSavingSettings(settings) {
   if (deviceSaveSwitch) deviceSaveSwitch.checked = settings.disableDeviceSaving;
 }
@@ -1421,6 +1434,7 @@ applyDateMode(savedSettings.dateMode);
 applyCustomerSettings(savedSettings);
 applyHistorySavingSettings(savedSettings);
 applyDeviceSavingSettings(savedSettings);
+updateSaveJpegAvailability(savedSettings);
 
 themeSwitch?.addEventListener("change", () => {
   const nextTheme = themeSwitch.checked ? "dark" : "light";
@@ -1464,6 +1478,7 @@ historySaveSwitch?.addEventListener("change", () => {
     disableHistorySaving: historySaveSwitch.checked
   };
   saveSettings(nextSettings);
+  updateSaveJpegAvailability(nextSettings);
 });
 
 deviceSaveSwitch?.addEventListener("change", () => {
@@ -1472,6 +1487,7 @@ deviceSaveSwitch?.addEventListener("change", () => {
     disableDeviceSaving: deviceSaveSwitch.checked
   };
   saveSettings(nextSettings);
+  updateSaveJpegAvailability(nextSettings);
 });
 
 resetSettingsBtn?.addEventListener("click", async () => {
@@ -1484,6 +1500,7 @@ resetSettingsBtn?.addEventListener("click", async () => {
   applyCustomerSettings(defaultSettings);
   applyHistorySavingSettings(defaultSettings);
   applyDeviceSavingSettings(defaultSettings);
+  updateSaveJpegAvailability(defaultSettings);
   showToast("Настройки сброшены", "success");
 });
 
