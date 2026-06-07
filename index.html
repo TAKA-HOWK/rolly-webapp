@@ -1543,6 +1543,14 @@ const systemsWithoutVgsh = new Set([
   "us 38 Standart E!", "us 38 lux E!", "us 38 lux D/N E!", "us 38 Cassette E!", "us 38 Fabric E!", "us 38 Square E!", "us 45 E!"
 ]);
 
+const systemsWithOptionalControlSide = new Set([
+  "mini", "mini d/n"
+]);
+
+function isControlSideRequired(systemValue) {
+  return !systemsWithOptionalControlSide.has(systemValue);
+}
+
 function syncBasisAvailabilityForSystem(systemValue) {
   const vgshPill = document.querySelector('#basis .pillr[data-val="ВГШ"]');
   if (!vgshPill) return;
@@ -1649,7 +1657,7 @@ $("#sortSelect").addEventListener("change", () => {
   if (!system) return showToast("Выберите систему", "error");
   if (!color || !w || !h || !q) return showToast("Заполните все поля", "error");
   if (!basis) return showToast("Выберите, по чем размеры", "error");
-  if (!side) return showToast("Выберите сторону управления", "error");
+  if (isControlSideRequired(system) && !side) return showToast("Выберите сторону управления", "error");
 
      // Показать заказчика и номер заказа
 $("#dateNumberDisplay").textContent = formatOrderDate($("#date").value.trim());
@@ -1663,7 +1671,7 @@ $("#orderInfo").style.display = "block";
     width: w,
     height: h,
     basis,
-    side,
+    side: side || "",
     qty: q
   });
      render();
